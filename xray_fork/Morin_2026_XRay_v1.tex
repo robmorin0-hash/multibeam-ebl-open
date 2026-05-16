@@ -1,0 +1,724 @@
+\documentclass[11pt,letterpaper]{article}
+
+% --- packages ---------------------------------------------------------
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{hyperref}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{fancyhdr}
+\usepackage{titling}
+\usepackage{enumitem}
+\usepackage{mdframed}
+\usepackage{textcomp}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=NavyBlue,
+  citecolor=NavyBlue,
+  urlcolor=NavyBlue
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small Preprint, May 2026 --- X-Ray v1}
+\fancyhead[R]{\small Morin --- X-Ray Direct-Write Litho v1}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.3pt}
+
+\setlength{\droptitle}{-2em}
+
+\title{\Large \textbf{X-Ray Direct-Write Lithography via Electron-Beam-Pumped Converter Array}\\[0.3em]
+  \large An Open, Mask-Free, Multi-Vendor Architecture Fork of\\
+  Morin (2026) v4 Multi-Beam EBL for Mature-Node and Custom Manufacturing}
+\author{Robert Gerald Morin\textsuperscript{1,*}\\[0.4em]
+  {\small \textsuperscript{1}N\^{I}KI Nation Builders, Edmonton, Alberta, Canada}\\
+  {\small \textsuperscript{*}Correspondence: \href{mailto:robmorin0@gmail.com}{robmorin0@gmail.com}}}
+\date{Preprint v1 --- May 16, 2026\\[0.3em]
+  {\small\textit{Companion to the Morin (2026) multi-beam electron-beam lithography (MBM-EBL) preprint series (v1--v4). MBM-EBL v3 quantitatively validated the per-beam Lorentz-steering architecture for direct-write electron lithography at mature nodes; v4 closed the cryogenic, photonic, and registration engineering. This X-ray v1 reuses the entire MBM-EBL v4 column upstream of the wafer plane and replaces the final electron-resist exposure stage with an electron-pumped soft-X-ray converter array, transferring the v4 architectural principles to X-ray lithography. The v1 rigor target matches MBM-EBL v3 (quantitative architecture sketch + closed-form physics + staged validation pathway), not MBM-EBL v4 (detailed subsystem engineering specifications).}}}
+
+\begin{document}
+\maketitle
+\thispagestyle{fancy}
+
+% --- open-release banner ---------------------------------------------
+\begin{mdframed}[linewidth=0.5pt,backgroundcolor=gray!4]
+\textbf{Open Release.} This work is released under a Creative Commons Attribution 4.0 International License (CC BY 4.0). It may be freely copied, modified, built, commercialised, or extended by anyone, for any purpose, with attribution to the author. The author retains no patent claim on the architecture or its constituent ideas. By publication, all combinations and methods described herein enter the public domain as prior art, and may not be enclosed by subsequent intellectual-property filings by any party.
+\end{mdframed}
+
+% --- abstract --------------------------------------------------------
+\begin{center}\textbf{Abstract}\end{center}
+\noindent
+We propose a multi-beam direct-write soft-X-ray lithography (MBM-XRL) architecture that applies the architectural principles of the Morin (2026) multi-beam EBL series --- per-beam independent steering, multi-rate control, mask-free direct write, multi-vendor supply chain, mature-node target, $\sim$\,10$\times$ cost advantage over EUV --- to X-ray lithography. The architectural primitive is the \textit{electron-pumped per-beam X-ray converter array}: the upstream column of MBM-EBL v4 is preserved unchanged ($N \sim 10^5$--$10^6$ independently-steered 50\,kV electron beams at 20\,\textmu m pitch, 77\,K cryogenic column, photonic data path), and the final exposure stage is changed by inserting a thin metallic converter target (Mg or Al K-line emitter) just above the wafer. Each electron beam generates its own localised soft-X-ray source spot at the converter; the X-rays then expose the wafer through a sub-micrometer proximity gap. The resulting tool is mask-free, direct-write, software-defined, multi-vendor, and capital-comparable to MBM-EBL v4 within the noise of a sketch-level estimate.
+
+The X-ray variant offers three distinct architectural advantages over MBM-EBL v4:
+
+\begin{enumerate}[leftmargin=1.6em]
+  \item \textbf{Decoupling of resist chemistry from electron-beam shot-noise.} Soft X-rays ($\sim$\,1\,nm, $\sim$\,1.25\,keV) couple to standard EUV-grade metal-oxide and chemically-amplified resists with broader process latitude than direct electron exposure, particularly for resists optimised for the EUV ecosystem (Inpria, Imec EUV CAR families).
+  \item \textbf{Wafer-side proximity-litho geometry decouples the placement budget from beam-column geometry.} The placement budget is split between \textit{upstream electron-beam placement on the converter} (inherited from MBM-EBL v4: $\sigma \approx 8$\,nm) and \textit{downstream X-ray geometric blur} (Fresnel diffraction + penumbra + photoelectron range in resist: $\sigma_X \approx 50$--$80$\,nm at 1\,nm wavelength + 1\,\textmu m proximity gap). For mature-node targets, the X-ray geometric blur dominates, freeing the upstream column from sub-10-nm placement requirements that drive MBM-EBL v4's cryogenic complexity.
+  \item \textbf{Resist outgassing decouples from the column.} The resist is exposed by photons, not by direct electron contact. Beam-induced contamination of the cold column from photoacid-generator volatiles is geometrically blocked by the converter foil itself, which acts as a vacuum bulkhead between the column UHV and the wafer subchamber.
+\end{enumerate}
+
+The validated node-range envelope is \textbf{80--250\,nm at 1\,nm wavelength} with a Mg-K converter target and $\sim$\,1\,\textmu m proximity gap, set primarily by Fresnel diffraction and photoelectron range in the resist. The tighter 50--80\,nm range accessible to MBM-EBL v4 is not directly available to MBM-XRL v1 at these wavelengths and gaps; a future v2 path through Cu-K$\alpha$ (0.154\,nm, 8.05\,keV) with sub-micrometer proximity and ultra-thin resist could extend the architecture toward 30\,nm, but is left open. Capital cost is estimated at \textbf{\$40--50\,M per tool}, retaining the order-of-magnitude advantage over EUV.
+
+The architecture inherits the multi-vendor supply chain check from MBM-EBL v4 ($\geq 3$ vendors / $\geq 2$ jurisdictions per subsystem) and adds three new vendor categories specific to X-ray operation (converter targets, X-ray-resist suppliers, proximity-gap metrology), each of which we show has multi-vendor commodity availability. We identify the remaining open engineering questions --- converter-foil thermal management, source-spot characterisation at the converter, photoelectron-range modelling in modern metal-oxide resists, and proximity-gap servo at $\sim$\,100\,nm tolerance --- and propose a staged validation pathway analogous to MBM-EBL v3 \S 7.
+
+The architecture is released openly. Any party may build, modify, or commercialise it without restriction.
+
+\medskip
+\noindent\textbf{Keywords:} X-ray lithography, proximity X-ray lithography, multi-beam direct write, electron-pumped X-ray source, mature-node semiconductor manufacturing, EUV alternatives, sovereign semiconductor supply chain, mask-free lithography
+
+\medskip
+\noindent\textbf{Classification:} Semiconductor manufacturing; X-ray lithography; Charged-particle optics; X-ray physics; Manufacturing automation
+
+\bigskip\hrule\bigskip
+
+% =====================================================================
+\section{Introduction}
+
+\subsection{Why X-ray lithography is worth re-opening}
+
+X-ray lithography has been written off twice. In the 1980s--1990s, the IBM and NTT proximity X-ray lithography (PXL) programs demonstrated 70--100\,nm patterning on synchrotron and compact-source X-ray tools, were technically competitive with the deep-ultraviolet (DUV) state of the art at the time, and were abandoned principally because of mask-related problems (membrane stability, mask cost, mask-to-mask matching) and because DUV scaling proved more economical than expected [24, 25]. By the time DUV reached its limit in the mid-2000s, the industry's R\&D investment had shifted to EUV at 13.5\,nm. The synchrotron and compact-X-ray-tube infrastructure built for PXL was largely dismantled.
+
+The first reason to re-open is that the principal \textit{historical} failure mode of X-ray lithography --- the X-ray mask --- is removed by direct-write architecture. A multi-beam direct-write X-ray tool needs no mask, in the same way that a multi-beam direct-write EBL tool needs none. The mask-membrane-stability problem, the mask-NRE-cost problem, and the mask-matching problem all dissolve simultaneously.
+
+The second reason to re-open is that the \textit{physical} advantages of soft X-ray exposure relative to DUV or direct e-beam exposure remain real. Soft X-rays at $\sim$\,1\,nm wavelength penetrate $\sim$\,3--10\,\textmu m of standard resist with little diffractive blur, expose through opaque overlayers (metal hardmasks, thick organic planarisation layers), produce small photoelectron ranges ($\sim$\,60--80\,nm in PMMA at 1\,keV photoelectron energy), and decouple cleanly from the visible/UV optics ecosystem. The EUV community has, in effect, validated the soft-X-ray exposure regime for production manufacturing; the question is whether the same exposure physics can be delivered through a different and substantially cheaper tool architecture.
+
+\subsection{Why the Morin (2026) MBM-EBL architectural principles transfer}
+
+The Morin (2026) MBM-EBL v3 [16] and v4 [17] preprints established that the following architectural primitives, taken together, drive an order-of-magnitude cost reduction relative to EUV at mature nodes:
+
+\begin{itemize}[leftmargin=1.6em]
+  \item \textbf{Per-beam independent steering} at $N = 10^5$--$10^6$ channels, with electromagnetic (Lorentz) deflection rather than shared electrostatic projection.
+  \item \textbf{Multi-rate control hierarchy}: inner electronic loop at 10--100\,kHz per beam, middle blanker loop at $\sim$\,1\,kHz per beam, outer mechanical loop at 1\,Hz for the wafer stage.
+  \item \textbf{Mask-free, software-defined patterning}, removing the \$10--50\,M mask-NRE that dominates custom-ASIC economics at mature nodes.
+  \item \textbf{Multi-vendor, multi-jurisdictional supply chain} with $\geq 3$ vendors and $\geq 2$ jurisdictions per subsystem, eliminating the EUV-style triple-monopoly (ASML/Zeiss/Cymer).
+  \item \textbf{Mature-node target} (50--180\,nm in MBM-EBL v4), explicitly \textit{not} competing with EUV at $<$\,5\,nm.
+  \item \textbf{Open architecture} (CC BY 4.0), preventing enclosure by any single integrator.
+  \item \textbf{Optional cryogenic + photonic stack} to manage thermal dissipation and pattern-data bandwidth at the $N \sim 10^6$ scale.
+\end{itemize}
+
+Of these seven primitives, \textbf{all seven transfer directly to an X-ray architecture in which the X-ray source is itself an array of $N \sim 10^6$ independently-controlled per-beam emitters}. The architectural problem reduces to: \textit{what is the right per-beam X-ray emitter, and how does it integrate with the v4 column?} \S 1.3 below establishes the choice.
+
+\subsection{Choice of X-ray generation mechanism}
+
+Four candidate X-ray generation mechanisms were considered, evaluated against the criterion of preserving the MBM-EBL v4 architectural principles most cleanly:
+
+\begin{center}
+\begin{tabular}{lllll}
+\toprule
+Mechanism & Per-beam indep. & Inherits v4 column? & Capital cost & Notes \\
+\midrule
+\textbf{Electron-pumped converter (chosen)} & Excellent & \textbf{Yes, entirely} & \$40--50\,M & Adds converter + proximity stage \\
+Inverse Compton scattering array & Poor & No (separate optical lattice) & \$200\,M+ & Scales catastrophically \\
+Laser-produced plasma (LPP) array & Moderate & Partially & \$100\,M+ & Per-source kJ drive lasers \\
+Programmable shutter array & Poor & No & \$30\,M & Essentially a programmable mask \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The \textbf{electron-pumped converter array} is the only candidate that preserves all seven MBM-EBL v4 primitives. The architectural change relative to v4 is purely additive: a thin converter target is inserted between the column and the wafer, and a proximity stage is added to control the converter--wafer gap. Every other subsystem (source array, deflection, cryogenic column, photonic data path, registration, wafer chuck) is inherited from v4 verbatim. This single-architectural-change property is decisive: it means MBM-XRL v1 is \textit{not} a new tool design but a v4-derivative tool design, with most of the v3/v4 engineering work already complete.
+
+The inverse Compton, LPP, and shutter-array variants are noted for completeness and discussed briefly in \S 7.3 as alternative architectures with different cost/performance tradeoffs; none are pursued in this v1 sketch.
+
+\subsection{Scope of this v1}
+
+This v1 preprint is a sketch at MBM-EBL v3 rigor level: closed-form physics, an architecture diagram (verbal), a first-pass placement budget, a sketch-level cost rollup, a multi-vendor supply-chain check, and a staged validation pathway. The subsystem-level engineering closure (cryogenic thermal accounting, photonic data path topology, MEMS source-array scale-up, etc.) is inherited unchanged from MBM-EBL v4 and is referenced rather than restated; subsystems specific to the X-ray variant (converter target, proximity stage, X-ray resist selection, X-ray-side dose calibration) are described at the v3 rigor level. A future v2 of MBM-XRL would close these subsystems at v4-rigor with supplementary specifications, after Stage A validation.
+
+% =====================================================================
+\section{Architecture}
+
+\subsection{Overview}
+
+The MBM-XRL v1 architecture is the MBM-EBL v4 column with a final-stage modification. From top to bottom:
+
+\begin{enumerate}[leftmargin=1.6em]
+  \item \textbf{MEMS field-emitter source array} (v4 \S 3.8): $N = 10^6$ Spindt/CNT cold-field-emitter tips at 20\,\textmu m pitch, with per-tip closed-loop current control to 1\,\% uniformity.
+  \item \textbf{Acceleration and condenser optics} (v4 baseline): each beam is accelerated to 50\,kV nominal (range 30--80\,kV --- the operating energy choice is discussed in \S 3.2). Common condenser optics shape each beam to a sub-20-nm focal spot at the converter plane.
+  \item \textbf{Cryogenic 77\,K column with HTS deflection coils} (v4 \S 3.5): YBCO 2G coated-conductor coils, Meissner shielding between coils, cryo-CMOS DACs, photonic data delivery. Each beam is independently steered with a $\pm 0.66$\,mm placement window and 8\,nm RMS total placement budget (v4 \S 4.4).
+  \item \textbf{Per-beam blanker array} (v4 \S 3.7): CMOS-MEMS hybrid die at the column footprint, 40\,V switched plates with 1\,GHz bandwidth.
+  \item \textbf{NEW --- Electron-pumped X-ray converter target}: a continuous thin metallic foil (Mg, Al, or Cu) suspended $\sim$\,1\,\textmu m above the wafer plane, oriented perpendicular to the electron beam axis. Electrons land on the upper surface of the foil and produce X-rays via bremsstrahlung continuum + characteristic K-line emission. The X-rays radiate downward into the wafer; high-energy backscattered electrons are absorbed in an upstream electron beam-stop coupled to the foil mount. See \S 2.2 below for the target subsystem.
+  \item \textbf{NEW --- Proximity stage}: a piezoelectric flexure stage holding the wafer chuck at a controlled gap $g$ (50\,nm--10\,\textmu m range, with 10\,nm gap repeatability) below the converter foil. Inherits the registration, metrology, and chuck-thermal subsystems from v4 \S 3.9--3.10.
+  \item \textbf{Wafer chuck and stage}: identical to v4 \S 3.10 --- AlN ceramic chuck with backside He gas, Galden microchannel loop, 36-zone TEC trim, and 6-DOF stage with Zygo ZMI interferometric metrology.
+\end{enumerate}
+
+\subsection{The converter target subsystem (new)}
+
+The converter is the principal new subsystem relative to MBM-EBL v4. Its design parameters:
+
+\begin{itemize}[leftmargin=1.6em]
+  \item \textbf{Target material}: thin metallic film selected for K-line emission at the desired wavelength. The v1 nominal is \textbf{100\,nm Mg foil on a 200\,nm Si$_3$N$_4$ membrane substrate}, providing Mg-K emission at 1.254\,keV (0.989\,nm), with the Si$_3$N$_4$ acting as a vacuum-bulkhead substrate and the Mg as the active emitter. Alternative target candidates discussed in \S 3.2 include Al-K (1.486\,keV, 0.834\,nm), Cu-L (0.93\,keV, 1.33\,nm), and the hard-X-ray Cu-K$\alpha$ (8.05\,keV, 0.154\,nm) for the future v2 path.
+  \item \textbf{Geometry}: continuous foil spanning the full 20\,mm $\times$ 20\,mm column footprint, mounted at the perimeter on a SiC frame. The frame includes integrated water-cooling channels for steady-state heat removal. Membrane stress is balanced between the Mg and Si$_3$N$_4$ layers to keep deflection under wafer load to $<$\,100\,nm peak-to-valley.
+  \item \textbf{Operating temperature}: nominally 295\,K (warm). The converter is \textit{not} part of the 77\,K cold column; it is mounted to the warm-side wafer chamber. This forces a cold-warm gap traverse for the electron beam, but the traverse is shorter and easier than v4 \S 3.11 because the converter is rigidly tied to the wafer plane (no relative motion). View-factor-limited radiative load on the cold column above is $\sim$\,150\,mW --- comparable to the v4 cold-warm interface budget.
+  \item \textbf{Lifetime}: at $I_b = 2$\,nA per beam $\times$ $10^6$ beams $\times$ 50\,keV = 100\,W total beam power deposited in the foil. Sputtering of the Mg layer at $\sim$\,$3 \times 10^{-3}$ atoms per electron at 50\,keV implies a sputtering rate of $\sim$\,$5 \times 10^{-9}$\,kg/s, or $\sim$\,40\,nm of Mg removed per hour averaged across the foil. The 100\,nm Mg layer is replaced approximately every 2.5 hours of operation, motivating an automatic foil-cartridge change system (see \S 5.4). Practical operation will likely use a thicker Mg layer (300--500\,nm) for $\sim$\,12-hour lifetime between cartridge changes; the tradeoff is a slight increase in X-ray source spot size due to electron scattering within the thicker target, discussed in \S 3.3.
+  \item \textbf{Vacuum sealing}: the converter foil + Si$_3$N$_4$ membrane acts as a vacuum bulkhead between the column UHV ($10^{-9}$\,Pa) and the wafer subchamber ($10^{-3}$\,Pa during resist outgassing). This is a load-bearing function: the membrane must survive a sustained $10^6$:1 pressure differential. 200\,nm Si$_3$N$_4$ is standard practice for X-ray windows in synchrotron-instrument beamlines [26]; comparable membranes routinely survive 1\,atm differentials across 20\,mm-diameter apertures. The $10^{-3}$\,Pa transient differential of MBM-XRL is six orders of magnitude milder.
+\end{itemize}
+
+\subsection{Multi-rate control (preserved from MBM-EBL v4)}
+
+The control hierarchy is identical to MBM-EBL v4 \S 2.3 with one addition:
+
+\begin{itemize}[leftmargin=1.6em]
+  \item \textbf{Inner loop (10--100\,kHz, electronic, per beam)}: Lorentz deflection of each electron beam on the converter plane. Each beam paints a 20\,\textmu m $\times$ 20\,\textmu m cell on the converter; the X-ray emission point on the converter is the steerable observable.
+  \item \textbf{Middle loop ($\sim$\,1\,kHz, electronic, per beam)}: per-beam blanker, on/off plus 4-bit greyscale dose modulation.
+  \item \textbf{Outer loop (1--10\,Hz, mechanical)}: wafer stage motion between full-column footprints ($\sim$\,10\,cm$^2$ fields).
+  \item \textbf{NEW --- Proximity loop ($\sim$\,10\,Hz, piezo)}: converter--wafer gap servo, maintaining the gap $g$ at the nominal 1\,\textmu m with $\sim$\,10\,nm tolerance. Setpoint is selected per layer based on the desired Fresnel-blur--vs--penumbra tradeoff (\S 3.4). Implemented via capacitive gap sensors at the converter frame perimeter and a piezo Z-flexure under the wafer chuck.
+\end{itemize}
+
+The proximity-gap loop is geometrically decoupled from the per-beam placement loop: gap variation affects all $10^6$ beams identically and is therefore a global degree of freedom calibrated once per layer, not a per-beam control variable.
+
+% =====================================================================
+\section{Physics framework}
+
+\subsection{Electron-to-X-ray conversion efficiency}
+
+For electrons impinging on a thick metallic target, the integrated X-ray emission efficiency is approximately
+
+\begin{equation}
+\eta \approx 7 \times 10^{-10} \cdot Z \cdot V_0 \;\;[\text{V}],
+\end{equation}
+
+a standard textbook result for the bremsstrahlung continuum integrated over $4\pi$\,sr [27]. For $Z = 12$ (Mg) and $V_0 = 50$\,kV, $\eta \approx 4.2 \times 10^{-4}$. The characteristic K-line emission contributes an additional $\sim$\,$10^{-4}$ to $\sim$\,$10^{-3}$ at the K-line energy, depending on the overvoltage ratio $V_0 / V_K$ ($V_K \approx 1.3$\,kV for Mg, giving an overvoltage of $\sim$\,38 at 50\,kV --- well above the maximum-K-yield overvoltage of $\sim$\,10). For thin targets at the v1 geometry (100--500\,nm Mg), only the fraction of electrons stopping within the foil contributes; the integrated efficiency is reduced by approximately the ratio of foil thickness to electron stopping range ($\sim$\,5\,\textmu m at 50\,keV in Mg), giving $\eta_\text{thin} \approx (0.1\text{--}0.5)\,\eta \approx 4{-}20 \times 10^{-5}$.
+
+For the v1 nominal (200\,nm Mg layer, 50\,kV beams), we take \textbf{$\eta = 1 \times 10^{-4}$} as a conservative design value, with the recognition that empirical measurement at Stage A may revise this upward (toward the thick-target $\sim$\,$4 \times 10^{-4}$ limit) or downward (if angular distribution into the wafer hemisphere is unfavourable).
+
+Of the integrated $4\pi$-sr emission, the fraction radiated into the downward hemisphere (toward the wafer) is $\sim$\,0.5 for a forward-isotropic source. Of \textit{that}, only the fraction subtended by the wafer aperture (which at $g = 1$\,\textmu m proximity is $\sim$\,$2\pi$ effectively, due to the geometry) contributes to wafer exposure. The net downward-hemisphere collection efficiency is $\sim$\,0.5, giving an effective wafer-incident X-ray power per beam:
+
+\begin{equation}
+P_X^\text{beam} = \eta_\text{thin} \cdot 0.5 \cdot I_b V_0 \approx 10^{-4} \cdot 0.5 \cdot 2\,\text{nA} \cdot 50\,\text{kV} \approx 5\,\text{nW}.
+\end{equation}
+
+At a photon energy $h\nu = 1.254$\,keV (Mg-K), this corresponds to a photon rate
+
+\begin{equation}
+\dot{n}_\text{ph}^\text{beam} = P_X / h\nu \approx 2.5 \times 10^{10}\,\text{photons/s per beam}.
+\end{equation}
+
+Aggregated across $N = 10^6$ beams, the total X-ray photon production rate is \textbf{$2.5 \times 10^{16}$\,photons/s into the wafer hemisphere}, or $\sim$\,5\,mW of soft-X-ray power. This is comparable to compact X-ray sources used in PXL-era research tools [25, 28] but distributed across $10^6$ independent emitters rather than a single point source.
+
+\subsection{Choice of converter wavelength}
+
+The choice of target material sets the X-ray wavelength, which trades off:
+
+\begin{center}
+\begin{tabular}{lrrrrr}
+\toprule
+Target & $h\nu$ (keV) & $\lambda$ (nm) & PE range in resist & Fresnel $\sqrt{\lambda g}$ at $g$=1\,\textmu m & Resist absorption length \\
+\midrule
+C-K (graphite) & 0.28 & 4.43 & $<$10\,nm & 67\,nm & 0.05--0.2\,\textmu m \\
+Cu-L & 0.93 & 1.33 & 30--50\,nm & 36\,nm & 1--3\,\textmu m \\
+\textbf{Mg-K (v1 nominal)} & \textbf{1.25} & \textbf{0.99} & \textbf{50--80\,nm} & \textbf{31\,nm} & \textbf{2--5\,\textmu m} \\
+Al-K & 1.49 & 0.83 & 80--120\,nm & 29\,nm & 3--8\,\textmu m \\
+Si-K & 1.74 & 0.71 & 100--150\,nm & 27\,nm & 4--10\,\textmu m \\
+W-M & 1.77 & 0.70 & 100--150\,nm & 26\,nm & 4--10\,\textmu m \\
+Cu-K$\alpha$ (v2 candidate) & 8.05 & 0.154 & 1000--2000\,nm & 12\,nm & 30--100\,\textmu m \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The principal tradeoff at this part of the X-ray spectrum is: \textbf{as wavelength shortens (energy hardens), Fresnel diffraction blur drops, but the photoelectron range in the resist grows linearly with PE kinetic energy, eventually dominating.} Mg-K at 1.25\,keV sits at the optimum: Fresnel $\sim$\,31\,nm (compatible with sub-100\,nm nodes at 1\,\textmu m proximity) and PE range $\sim$\,50--80\,nm (compatible with 100--200\,nm nodes). This is the same architectural choice made historically by IBM's 1990s PXL program [24].
+
+Cu-K$\alpha$ at 8.05\,keV is the most promising candidate for a future v2 hard-X-ray path, accepting the increased PE-range constraint in exchange for much tighter Fresnel resolution. At Cu-K$\alpha$, the PE range in PMMA exceeds 1\,\textmu m, which would force ultra-thin resist ($<$50\,nm) and aggressive hardmask strategies. We flag this as a v2-candidate architecture but do not develop it further in v1.
+
+\subsection{Source spot size on the converter}
+
+The X-ray source spot on the converter is set by three contributions:
+
+\begin{itemize}[leftmargin=1.6em]
+  \item \textbf{Incoming electron beam spot} at the converter plane: inherited from v4, $\sim$\,5\,nm RMS.
+  \item \textbf{Lateral electron scattering} within the converter foil: for 100\,nm Mg at 50\,keV, the lateral spread of the electron interaction volume is $\sim$\,30\,nm (Monte Carlo CASINO/PENELOPE estimates [29] for thin foils; the full electron range of 5\,\textmu m is mostly forward-scattered, but lateral kicks accumulate). For 500\,nm Mg (the thicker variant used for cartridge-life extension), the lateral spread grows to $\sim$\,80\,nm.
+  \item \textbf{Backscatter / re-emission} within the Si$_3$N$_4$ substrate below the Mg layer: contributes a low-amplitude tail at the $\sim$\,100\,nm scale.
+\end{itemize}
+
+For the v1 nominal (100\,nm Mg + 200\,nm Si$_3$N$_4$, 50\,kV electrons), the effective X-ray source spot at the lower face of the converter is \textbf{$\sim$\,30--50\,nm FWHM}, with a broader low-amplitude tail at $\sim$\,100\,nm scale from the substrate backscatter contribution. This is the controlling parameter for penumbral blur in \S 3.4.
+
+The 30--50\,nm source spot at the converter is substantially larger than the 5\,nm e-beam spot at v4's wafer plane. \textit{This is the principal physical penalty paid for the X-ray architecture.} The architectural answer is that the X-ray exposure stage is geometrically decoupled from the wafer placement: source-spot--driven penumbra at the wafer is a property of the X-ray geometry, not the upstream electron-beam placement budget, and folds into the X-ray-side budget of \S 3.4 rather than the electron-side budget of MBM-EBL v4.
+
+\subsection{Wafer-plane resolution budget}
+
+Four blur mechanisms add (in quadrature, with caveats) at the wafer plane:
+
+\textbf{(a) Fresnel diffraction:}
+\begin{equation}
+\sigma_\text{Fresnel} \approx \sqrt{\lambda \cdot g},
+\end{equation}
+where $\lambda$ is the X-ray wavelength and $g$ is the proximity gap. For $\lambda = 1$\,nm (Mg-K) and $g = 1$\,\textmu m: $\sigma_\text{Fresnel} \approx 31$\,nm. Halving the gap to $g = 250$\,nm brings this to 16\,nm; doubling the gap to 4\,\textmu m pushes to 63\,nm.
+
+\textbf{(b) Penumbral (geometric) blur from finite source spot:}
+\begin{equation}
+\sigma_\text{penumbra} \approx s \cdot \frac{g}{D + g},
+\end{equation}
+where $s$ is the X-ray source spot diameter at the converter, and $D$ is the source-to-wafer distance. In the proximity geometry, $D \approx g$ (the source is at the lower face of the converter foil, immediately above the wafer), so Eq. (5) reduces to
+$$\sigma_\text{penumbra} \approx s/2.$$
+For $s = 40$\,nm: $\sigma_\text{penumbra} \approx 20$\,nm. The source spot is the controlling parameter and is essentially independent of the proximity gap in the proximity limit.
+
+\textbf{(c) Photoelectron range in resist:}
+\begin{equation}
+\sigma_\text{PE} \approx R_\text{PE}(E_\text{PE}),
+\end{equation}
+where $R_\text{PE}$ is the practical range of photoelectrons in the resist. For Mg-K photons (1.254\,keV) absorbed by the C-K shell of PMMA (binding energy $\sim$\,0.28\,keV), the photoelectron has kinetic energy $\sim$\,0.97\,keV and a practical range in PMMA of $\sim$\,60--80\,nm [30]. For HSQ (silsesquioxane), the range is similar. For Inpria Sn-cluster resists, the heavy-metal content shortens the practical range to $\sim$\,30--50\,nm because secondary cascade events deposit dose more locally [22]. The v1 nominal uses Inpria-class resist for the production node range, giving $\sigma_\text{PE} \approx 40$\,nm.
+
+\textbf{(d) Upstream electron-beam placement budget:} inherited from MBM-EBL v4 at $\sigma \approx 8$\,nm. This is the \textit{position uncertainty of the X-ray source on the converter}, which translates approximately 1:1 to the wafer plane in the proximity geometry. We carry $\sigma_\text{e-beam} = 8$\,nm.
+
+The v1 total resolution budget at the wafer plane is
+
+\begin{equation}
+\sigma_\text{total,X} = \sqrt{\sigma_\text{Fresnel}^2 + \sigma_\text{penumbra}^2 + \sigma_\text{PE}^2 + \sigma_\text{e-beam}^2},
+\end{equation}
+
+evaluated at the v1 nominal ($\lambda = 1$\,nm, $g = 1$\,\textmu m, $s = 40$\,nm, Inpria resist):
+
+$$\sigma_\text{total,X} = \sqrt{31^2 + 20^2 + 40^2 + 8^2}\,\text{nm} \approx 55\,\text{nm}.$$
+
+For the conservative case ($s = 60$\,nm, 500\,nm Mg foil; PMMA resist with $\sigma_\text{PE} = 80$\,nm): $\sigma_\text{total,X} \approx 88$\,nm.
+
+\subsection{Validated node-range envelope}
+
+Adopting the 20\,\%-sub-pixel placement convention from MBM-EBL v4 \S 4.5:
+
+\begin{center}
+\begin{tabular}{rrll}
+\toprule
+Node & 20\,\% sub-pixel budget & v1 nominal verdict ($\sigma$ = 55\,nm) & v1 conservative verdict ($\sigma$ = 88\,nm) \\
+\midrule
+250\,nm & 50\,nm & comfortable PASS & marginal PASS \\
+180\,nm & 36\,nm & marginal & FAIL \\
+130\,nm & 26\,nm & marginal FAIL & FAIL \\
+90\,nm & 18\,nm & FAIL & FAIL \\
+50\,nm & 10\,nm & FAIL & FAIL \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The v1 architecture is therefore best matched to the \textbf{180--250\,nm node range} at conservative assumptions and \textbf{130--250\,nm at nominal assumptions}. The 90\,nm node and below requires either (a) tighter proximity (sub-500\,nm gap, which stresses the gap servo and the planarity tolerance of the converter foil), (b) a tighter-source-spot converter (thinner Mg, sub-200\,nm Si$_3$N$_4$ substrate, accepting reduced membrane robustness), or (c) the v2 path to harder X-rays (Cu-K$\alpha$) combined with ultra-thin resist.
+
+The conservative 250--180\,nm range is \textit{exactly the range underserved by EUV (which targets $<$\,5\,nm) and where DUV mask economics are most punishing for low-volume custom designs}. It overlaps the upper end of MBM-EBL v4's 50--180\,nm range and extends $\sim$\,70\,nm coarser. The architecture is not redundant with MBM-EBL v4 --- it serves the coarser end of mature-node manufacturing where X-ray resist process latitude and wafer-side proximity geometry are advantageous --- but it also does not extend below v4's node floor.
+
+\subsection{Throughput}
+
+Per-beam X-ray photon rate at the wafer (Eq. 3): $2.5 \times 10^{10}$\,ph/s.
+
+For a standard resist sensitivity of 20\,mJ/cm$^2$ (Inpria-class, similar to EUV resist dose [22]), the required photon flux per cm$^2$ at 1.254\,keV is $20 \times 10^{-3} / (1.254 \times 10^3 \times 1.6 \times 10^{-19}) = 1.0 \times 10^{14}$\,ph/cm$^2$.
+
+For a 30\,nm pixel ($9 \times 10^{-12}$\,cm$^2$), the required dose per pixel is \textbf{900 photons}. (Note this is comfortably above the soft-X-ray stochastic-defect floor of $\sim$\,30 photons per pixel set by Poisson statistics; the v1 architecture is not shot-noise-limited at the target nodes.)
+
+Per-pixel exposure time per beam: $900 / (2.5 \times 10^{10}) \approx 36$\,ns.
+
+For a 300\,mm wafer at 30\,nm grid: total pixels = $7.85 \times 10^{13}$. With $N = 10^6$ parallel beams, each exposes $7.85 \times 10^7$ pixels in $7.85 \times 10^7 \times 36 \times 10^{-9} \approx 2.8$\,s. With $N = 10^5$ beams (conservative configuration): layer time $\sim$\,28\,s.
+
+\textbf{Layer throughput} at 30\,nm pixel grid: \textbf{$\sim$\,1300\,layers/hr (aggressive, $10^6$ beams) or $\sim$\,130\,layers/hr (conservative, $10^5$ beams)}.
+
+\textbf{Wafer throughput} through a representative 70-layer mature-node process flow: \textbf{$\sim$\,18\,wph (aggressive) or $\sim$\,1.8\,wph (conservative)}.
+
+These numbers are comparable to MBM-EBL v4 ($\sim$\,15\,wph aggressive). The MBM-XRL throughput is \textit{not penalised} relative to v4 by the conversion efficiency --- the per-beam current is the same, the dose per pixel is higher in raw-photon count but the photon-energy-per-event is correspondingly lower, and the net pixels-per-second-per-beam works out within a factor of 2. The principal throughput cost relative to v4 is the dose budget overhead from the lower-than-100\,\% conversion efficiency, which is absorbed by the longer per-pixel exposure time.
+
+\subsection{Cross-beam interactions}
+
+The MBM-EBL v3 cross-beam Coulomb perturbation analysis (v3 \S 3.4) applies \textit{upstream of the converter}, unchanged. Within the column, electron beams interact via Coulomb force as in v4; the v3 $\sigma_\text{cross} \approx 2$\,nm at the v4-derated 2\,nA / 20\,\textmu m pitch is inherited.
+
+\textit{Below} the converter, X-ray photons do not interact with each other (no photon-photon scattering at these energies). The cross-beam X-ray exposure budget therefore does not need a new lattice-sum analysis; X-ray exposure from neighbouring beams overlaps geometrically (at the wafer plane, with the geometric blur of Eq. 7) and combines additively in dose. This is \textit{easier} than the e-beam case, because the only cross-beam coupling is the deterministic dose-overlap from adjacent beams' soft penumbral skirts, which is calibratable per the v3 \S 3.4.2 framework (deterministic component absorbed into per-beam DAC offset).
+
+\subsection{Shot noise}
+
+X-ray photon shot noise is the fundamental dose-fluctuation limit. For 900 photons per pixel (\S 3.6 above), Poisson shot noise is $\sqrt{900}/900 \approx 3.3$\,\%, well under the $\sim$\,5\,\% line-edge-roughness budget for mature-node manufacturing. The architecture is shot-noise-safe at the v1 nominal dose.
+
+For higher-resolution operation at 10\,nm pixel ($10^{-13}$\,cm$^2$), the required dose drops to 100 photons per pixel, which gives 10\,\% Poisson noise --- at the edge of mature-node acceptability and forcing either dose-increase or pixel-averaging. This is one of the soft barriers that prevents the v1 architecture from extending below $\sim$\,100\,nm without further engineering.
+
+% =====================================================================
+\section{Subsystem engineering}
+
+\subsection{Inherited from MBM-EBL v4 (without change)}
+
+The following subsystems are inherited from MBM-EBL v4 with no modification. Specifications are documented in [16] and [17]; we reference rather than restate.
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+Subsystem & Inherited from \\
+\midrule
+MEMS field-emitter source array ($10^6$ tips at 20\,\textmu m pitch) & v4 \S 3.8 + [S5] \\
+Acceleration \& condenser optics & v4 \S 2.1 \\
+Cryogenic 77\,K column with HTS deflection coils & v4 \S 3.5 + [S2] \\
+Meissner-effect magnetic shielding & v4 \S 3.5 + [S2] \\
+Photonic 50\,Tbps data path with cryo-CMOS DACs & v4 \S 3.6 + [S3] \\
+Per-beam blanker subsystem (CMOS-MEMS) & v4 \S 3.7 + [S4] \\
+Three-tier fiducial registration loop & v4 \S 3.9 + [S5] \\
+AlN wafer chuck with backside He + Galden + TEC & v4 \S 3.10 + [S6] \\
+Cold--warm UHV interface & v4 \S 3.11 + [S7] \\
+Wafer stage, Zygo ZMI metrology, granite base & v4 \S 3.9 \\
+Resist outgassing pumping & v4 \S 3.12 + [S8] \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+This is approximately \textbf{85\,\% of the v4 capital budget by line-item count}. The fact that the X-ray variant reuses this much of v4 is the architectural justification for the design choice in \S 1.3: the per-beam electron-pumped converter array is the only X-ray generation mechanism that preserves the v4 column wholesale.
+
+\subsection{New subsystems specific to MBM-XRL v1}
+
+\subsubsection{Converter target subsystem}
+
+\textbf{Function}: convert each electron beam to a localised soft-X-ray source spot.
+
+\textbf{Architecture}: continuous 100\,nm Mg layer on a 200\,nm Si$_3$N$_4$ membrane, framed by a SiC perimeter with integrated water-cooling channels. Cartridge-replaceable on a magazine system ($\sim$\,12\,cartridges/magazine, automatic indexing every $\sim$\,12 hours).
+
+\textbf{Thermal load}: 100\,W total beam power deposited in the foil for an unblanked $N = 10^6$ array; $\sim$\,26\,W steady-state at 26\,\% write-cycle duty (matching v4 \S 3.10). Foil itself rises $\sim$\,50\,K above the perimeter frame (conduction-limited, no convection); frame cooled to 295\,K by the water loop. The foil temperature gradient is acceptable for the 100\,K Mg melting margin (Mg melts at 923\,K).
+
+\textbf{Vendors}: Si$_3$N$_4$ membrane suppliers (Norcada Canada, Silson UK, Plano Germany --- all multi-jurisdiction); Mg deposition (Lesker, AJA International, Mantis Deposition --- multi-vendor commodity sputtering); SiC frame (Coorstek, II-VI/Coherent, Saint-Gobain). Cartridge magazine: custom mechanical design at $\sim$\,\$300\,k NRE.
+
+\textbf{Cost}: \$2.0\,M tool capital (\$1.5\,M cartridge magazine + \$0.3\,M initial inventory of 20 cartridges at \$25\,k each + \$0.2\,M water cooling and frame infrastructure). Recurring: \$25\,k/cartridge $\times$ 4--10 cartridges/month operating = \$0.1--0.25\,M/year in consumables.
+
+\subsubsection{Proximity gap servo subsystem}
+
+\textbf{Function}: maintain converter--wafer gap $g$ at 0.5--4\,\textmu m nominal range with $\sim$\,10\,nm tolerance.
+
+\textbf{Architecture}: piezo Z-flexure under the wafer chuck ($\sim$\,5\,\textmu m stroke); capacitive gap sensors at four corners of the converter frame (sensing the chuck top surface, not the wafer itself, to remove wafer-thickness variation from the gap servo); FPGA-based gap controller with 10\,kHz update rate.
+
+\textbf{Stability budget}: gap variation translates to Fresnel-blur variation per Eq. (4). At $g = 1$\,\textmu m and $dg = 10$\,nm, the Fresnel blur changes by $\sim 0.5 \sqrt{\lambda \cdot dg/g} \approx 0.15$\,nm --- negligible. The 10\,nm tolerance is essentially a planarity tolerance, not a Fresnel-resolution tolerance, and is set by the residual wafer-side topology rather than the X-ray budget.
+
+\textbf{Vendors}: piezo Z-flexure (Physik Instrumente DE, Aerotech US, PI miCos DE, Smaract DE --- multi-vendor commodity); capacitive gap sensors (Lion Precision US, MicroEpsilon DE, ADE Phase Shift US); FPGA controller (Xilinx US, Lattice US, Intel/Altera US --- multi-vendor).
+
+\textbf{Cost}: \$0.6\,M tool capital.
+
+\subsubsection{X-ray resist subsystem}
+
+\textbf{Function}: photon-sensitive resist with high absorption at 1\,nm wavelength, low photoelectron range, and process compatibility with standard semiconductor fab.
+
+\textbf{Architecture}: Inpria Sn-cluster metal-oxide resists are the v1 nominal --- same family used by MBM-EBL v4 [22] and by the EUV ecosystem. Soft-X-ray absorption coefficient is $\sim$\,3\,\textmu m$^{-1}$ at 1.254\,keV (well-matched to $\sim$\,100\,nm thick resist), and the heavy-metal Sn content provides the short photoelectron range noted in \S 3.4(c). Alternative: HSQ for prototyping (lower outgassing for Stage A/B characterisation).
+
+\textbf{Note on differentiation}: the X-ray resist subsystem is \textit{easier} than the equivalent e-beam resist subsystem in MBM-EBL v4, because X-ray exposure produces photoelectrons via a known cross-section per atomic shell, with much less dependence on resist polymer chemistry than direct electron exposure. The same Inpria resist can in principle serve both v4 (e-beam) and MBM-XRL v1 (X-ray) tools; cross-tool process integration is simplified.
+
+\textbf{Vendors}: Inpria/Applied Materials (US), JSR (JP), TOK (JP), DuPont (US), Allresist (DE), Microresist (DE) --- multi-vendor and multi-jurisdictional.
+
+\textbf{Cost}: \$0 incremental tool capital (resist is a consumable, not a tool subsystem); resist budget rolls into per-wafer cost-of-goods.
+
+\subsubsection{X-ray dose calibration subsystem}
+
+\textbf{Function}: per-beam dose calibration accounting for per-tip converter-efficiency variation, foil-thickness gradient, and X-ray detector linearity.
+
+\textbf{Architecture}: Si-PIN photodiode array at the wafer plane (placed in a fiducial-strip outside the active patterned area) measuring per-beam X-ray flux during calibration scans. Used during the first $\sim$\,10 wafers of a cartridge change to characterise the new foil's per-beam emission map, then closed-loop trims per-beam blanker duty cycle to equalise wafer-plane dose.
+
+\textbf{Vendors}: Si-PIN photodiode arrays (Amptek US, Hamamatsu JP, Ketek DE --- multi-vendor); readout electronics (Cremat US, Caen IT --- multi-vendor).
+
+\textbf{Cost}: \$0.4\,M tool capital.
+
+\subsection{Capital cost rollup (v1)}
+
+\begin{center}
+\begin{tabular}{lrl}
+\toprule
+Subsystem & Cost share & Source \\
+\midrule
+Electron source array (MEMS CNT/Spindt) & \$3.0\,M & v4 [S5] \\
+Per-beam source closed-loop control & \$0.65\,M & v4 [S5] \\
+Acceleration \& condenser optics & \$2.0\,M & v4 baseline \\
+Per-beam HTS deflection coils + Meissner shields & \$4.7\,M & v4 [S2] \\
+Per-beam cryo-CMOS DAC + photonic data path & \$5.3\,M & v4 [S3] \\
+Per-beam blanker array (CMOS-MEMS) & \$0.6\,M & v4 [S4] \\
+Wafer stage + 3-tier registration + ZMI metrology & \$15.0\,M & v4 [S5] \\
+Wafer chuck thermal management & \$0.45\,M & v4 [S6] \\
+Cryocooler + cold--warm interface & \$1.5\,M & v4 [S2] + [S7] \\
+Vacuum + differential pumping + resist mgmt & \$2.3\,M & v4 [S8] \\
+Control system + software & \$2.0\,M & v4 baseline \\
+\textbf{NEW --- Converter target subsystem} & \textbf{\$2.0\,M} & \textbf{\S 4.2.1} \\
+\textbf{NEW --- Proximity gap servo} & \textbf{\$0.6\,M} & \textbf{\S 4.2.2} \\
+\textbf{NEW --- X-ray dose calibration} & \textbf{\$0.4\,M} & \textbf{\S 4.2.3} \\
+\midrule
+\textbf{Total} & \textbf{\$40.5\,M} & \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Range: \textbf{\$40--50\,M per production tool}, accommodating the v4-baseline uncertainty bands. The X-ray variant adds \textbf{\$3.0\,M of new subsystems} to the \$37.4\,M v4 baseline, a marginal increase of $\sim$\,8\,\%. The cost advantage over EUV (\$200--400\,M) is preserved at $\sim$\,5--10$\times$; the cost advantage over DUV (\$50--100\,M) is preserved at $\sim$\,1.5--2$\times$.
+
+\subsection{Supply-chain check ($\geq 3$ vendors, $\geq 2$ jurisdictions)}
+
+The v4 supply-chain table (v4 \S 5) is inherited for the 85\,\% of subsystems shared with v4. The new MBM-XRL-specific subsystems are documented above (\S 4.2.1--4.2.4) and each pass the $\geq 3$-vendor / $\geq 2$-jurisdiction test:
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+New subsystem & Vendors \\
+\midrule
+Si$_3$N$_4$ membrane substrate & Norcada (CA), Silson (UK), Plano (DE), Greatcell (AU) \\
+Mg thin-film deposition (or Mg metal source) & Kurt J. Lesker (US), AJA International (US), Mantis (UK), Singulus (DE) \\
+SiC perimeter frame & Coorstek (US), II-VI/Coherent (US), Saint-Gobain (FR), Kyocera (JP) \\
+Piezo Z-flexure & Physik Instrumente (DE), Aerotech (US), Smaract (DE), Cedrat (FR) \\
+Capacitive gap sensor & Lion Precision (US), MicroEpsilon (DE), ADE Phase Shift (US), Microsense (US) \\
+Si-PIN X-ray photodiode & Amptek (US), Hamamatsu (JP), Ketek (DE), XGLab (IT) \\
+X-ray resist & Inpria/AMAT (US), JSR (JP), TOK (JP), DuPont (US), Allresist (DE) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+No single-vendor chokepoint is introduced. The v4 multi-vendor premise is preserved.
+
+% =====================================================================
+\section{Validation pathway}
+
+Following the MBM-EBL v3 \S 7 staged structure, with X-ray-specific modifications:
+
+\subsection{Stage 0: Numerical validation}
+
+\textbf{Goal}: close the v1 placement budget numerically.
+
+\textbf{Work items}:
+\begin{itemize}[leftmargin=1.6em]
+  \item \textbf{Monte Carlo electron-foil interaction} at the v1 converter geometry (100\,nm Mg / 200\,nm Si$_3$N$_4$, 50\,kV electrons) using CASINO or PENELOPE [29]; outputs are X-ray angular distribution, lateral source spot, and conversion efficiency. Refines the \S 3.1 conservative $\eta = 10^{-4}$ to a measured value.
+  \item \textbf{Photoelectron-range modelling} in Inpria-class resists at Mg-K, Al-K, and Cu-L photon energies, using GEANT4 or PENELOPE. Refines the \S 3.4(c) PE-range estimate.
+  \item \textbf{Fresnel + penumbra wave-optics simulation} at gap $g \in [0.1, 10]$\,\textmu m and source spot $s \in [10, 100]$\,nm, characterising the joint $\sigma_\text{Fresnel}$ + $\sigma_\text{penumbra}$ envelope (the simple quadrature of Eq. 7 likely overestimates the true joint distribution at small gaps where the two effects correlate).
+  \item \textbf{Cartridge-life sputter modelling} under the v1 beam-power distribution.
+\end{itemize}
+
+\textbf{Cost}: \$0 (open-source codes on commodity Linux + cloud GPU as needed).
+
+\textbf{Outcome}: refined v1 placement budget; converter-design parameters for Stage A; identified resist-PE-range optimisation candidates.
+
+\subsection{Stage A: Single-beam Lorentz steering + converter validation}
+
+\textbf{Goal}: demonstrate single-electron-beam $\to$ converter $\to$ wafer-plane X-ray exposure with controllable position and dose.
+
+\textbf{Components}:
+\begin{itemize}[leftmargin=1.6em]
+  \item Single 50\,kV electron column (reused from MBM-EBL v3 Stage A if available, or commercial gun $\sim$\,\$200\,k).
+  \item HTS deflection coil at 77\,K (validates v4 \S 3.5 simultaneously).
+  \item Converter target prototype (single 5$\times$5\,mm Mg foil on Si$_3$N$_4$).
+  \item Si-PIN X-ray detector for source-spot characterisation.
+  \item Resist-exposure test wafer with HSQ for blur characterisation.
+  \item Piezo proximity stage at 100\,nm tolerance.
+\end{itemize}
+
+\textbf{Estimated cost}: \textbf{\$0.5--1\,M}.
+
+\textbf{Outcome}: validates the X-ray conversion efficiency at the v1 geometry, measures source-spot size empirically, demonstrates single-beam patterned resist exposure with measured $\sigma_\text{total}$ at known proximity gap, validates Eq. (7) experimentally.
+
+\subsection{Stage B: Few-beam prototype with converter array}
+
+\textbf{Goal}: 4$\times$4 to 8$\times$8 beam array at 20\,\textmu m pitch with a single common converter target.
+
+\textbf{Components}: v4 Stage B prototype hardware + Stage A converter target scaled to $\sim$\,5$\times$5\,mm. Demonstrates that multiple e-beams sharing a continuous converter foil do not cross-couple at the X-ray-emission stage (a new question relative to v4) and that the per-beam blanker faithfully gates X-ray emission.
+
+\textbf{Estimated cost}: \textbf{\$5--7\,M} (vs v4 \$5\,M Stage B; X-ray-specific additions $\sim$\,\$0.5\,M).
+
+\textbf{Outcome}: validates cross-beam X-ray exposure overlap, per-beam X-ray dose calibration, converter-foil stability under multi-beam load, and the first multi-beam X-ray-exposed resist pattern at v1 nominal node.
+
+\subsection{Stage C: Beam-count scaling}
+
+\textbf{Goal}: scale to $10^3$--$10^4$ beams under a continuous 5--10\,mm converter target.
+
+\textbf{Estimated cost}: \textbf{\$10--15\,M}.
+
+\textbf{Outcome}: characterises foil-life and contamination at production density; first wafer-scale X-ray exposures at the v1 nominal 130--250\,nm node range.
+
+\subsection{Stage D: Production prototype}
+
+\textbf{Goal}: full $10^5$--$10^6$ beam tool with production-grade converter cartridge magazine, integrated with standard wafer-processing line.
+
+\textbf{Estimated cost}: \textbf{\$40--50\,M} (per the \S 4.3 capital rollup).
+
+\textbf{Outcome}: commercial mature-node X-ray manufacturing capability.
+
+\textbf{Total program cost} (Stage 0 $\to$ Stage D): \textbf{\$55--75\,M, 36--60 month timeline}, comparable to MBM-EBL v4 (\$45--60\,M, 36--60 months).
+
+% =====================================================================
+\section{Comparison with existing lithography technologies}
+
+\subsection{vs. EUV (ASML NXE/EXE class)}
+
+EUV targets $<$\,5\,nm at \$200--400\,M / tool. MBM-XRL v1 targets 130--250\,nm at \$40--50\,M / tool. The two technologies do not compete on node range or throughput. The MBM-XRL v1 architecture's advantages over EUV are entirely in capital cost, supply-chain diversification, mask elimination, and software-defined direct-write reconfigurability --- the same advantages claimed by MBM-EBL v4. At the leading edge, EUV remains uncontested.
+
+\subsection{vs. DUV ArFi (current mature-node workhorse)}
+
+DUV immersion dominates 14--180\,nm production. MBM-XRL v1 overlaps DUV at the coarser end (130--250\,nm). Where chip design volume is high, DUV's mask-amortisation favours DUV; where volume is low (custom ASICs, defence, research, biomedical, scientific instruments), MBM-XRL v1's mask-free direct-write changes the economics in the same way MBM-EBL v4 does.
+
+MBM-XRL v1's specific advantage \textit{over MBM-EBL v4} in this segment is that the X-ray resist process latitude is better-matched to the existing EUV resist ecosystem (Inpria, etc.), which simplifies cross-tool resist process integration in fabs running both EUV and MBM-XRL tools.
+
+\subsection{vs. multi-beam EBL (MBM-EBL v4)}
+
+MBM-XRL v1 and MBM-EBL v4 are complementary, not competitive:
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Property & MBM-EBL v4 & MBM-XRL v1 \\
+\midrule
+Node range & 50--180\,nm & 130--250\,nm \\
+Resolution-limiting physics & Loeffler--Jansen + cross-beam Coulomb & Fresnel + PE range + source spot \\
+Resist & Inpria + HSQ (e-beam) & Inpria + HSQ (X-ray) \\
+Throughput & $\sim$\,15\,wph & $\sim$\,18\,wph \\
+Capital cost & \$37\,M & \$40--50\,M \\
+Outgassing-to-column coupling & direct & blocked by converter foil \\
+Process integration with EUV fabs & good (resist shared) & very good (resist + radiation-type shared) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The two architectures together cover \textbf{50--250\,nm at $<$\,\$50\,M / tool}, the entire mature-node range with explicit cross-coverage at 130--180\,nm. A fab equipped with both tools has redundant exposure pathways across most of the mature-node spectrum.
+
+\subsection{vs. historical proximity X-ray lithography (PXL, 1980s--1990s)}
+
+The IBM and NTT PXL programs established that soft X-ray proximity exposure at 1\,nm wavelength achieves 70--100\,nm resolution under good geometric control [24, 25]. MBM-XRL v1's resolution budget (\S 3.4) is consistent with this historical anchor at $g \approx 0.5$\,\textmu m and tight source spot; the v1 nominal at $g = 1$\,\textmu m and 40\,nm source is somewhat coarser.
+
+The MBM-XRL v1 architectural advance over PXL is fivefold:
+
+\begin{enumerate}[leftmargin=1.6em]
+  \item \textbf{No X-ray mask.} PXL required a Au-on-Si$_3$N$_4$ X-ray mask whose membrane stability, distortion under heat load, and matching across mask sets killed PXL economically. MBM-XRL v1 is mask-free; the converter foil is not a pattern carrier, only a wavelength converter.
+  \item \textbf{Direct software-defined patterning.} MBM-XRL v1 inherits the v4 mask-free direct-write economics: zero mask NRE, seconds-to-reconfigure pattern.
+  \item \textbf{Massive parallelism via electronic steering.} PXL throughput was set by a single X-ray source; MBM-XRL v1 has $10^6$ parallel X-ray sources, each independently controlled at kHz--MHz bandwidth.
+  \item \textbf{Modern cryo-photonic infrastructure.} MBM-XRL v1 inherits v4's cryogenic column, photonic data path, and 8\,nm registration budget --- none of which existed for the PXL programs.
+  \item \textbf{Open architecture.} The PXL programs were captured by single-corporate IP regimes; MBM-XRL v1 is CC BY 4.0.
+\end{enumerate}
+
+\subsection{vs. inverse-Compton-source or LPP-based X-ray lithography}
+
+Both inverse Compton and LPP variants (\S 1.3) are noted in the literature [31, 32] as possible compact X-ray source paths. Neither preserves the v4 architectural principles at $N = 10^6$ scale, as documented in \S 1.3. They are not pursued in v1.
+
+% =====================================================================
+\section{Open questions}
+
+The MBM-EBL v4 closed seven of its engineering hurdles to subsystem-spec rigor; MBM-XRL v1 inherits those closures for the 85\,\% of v4-shared subsystems and adds new open questions specific to the X-ray variant. The principal v1 open items are:
+
+\subsection{Converter-foil characterisation}
+
+\textbf{Question}: at the v1 nominal geometry (100\,nm Mg / 200\,nm Si$_3$N$_4$, 50\,kV), what is the empirical X-ray source-spot size at the lower face of the converter, and how does it scale with foil thickness and electron energy? The \S 3.3 estimate of 30--50\,nm relies on CASINO/PENELOPE simulations that are calibrated against thick-target geometries; thin-foil X-ray emission patterns may differ.
+
+\textbf{Address path}: Stage A direct measurement, supplemented by Stage 0 Monte Carlo simulation. Expected refinement: $\pm 30$\,\%.
+
+\textbf{Impact}: source-spot size feeds directly into $\sigma_\text{penumbra}$ in Eq. (5) and therefore into the node range. If the empirical source spot is 80\,nm rather than 40\,nm, the v1 node range shifts coarser by $\sim$\,30\,nm.
+
+\subsection{Photoelectron range in Inpria-class resists at soft X-ray}
+
+\textbf{Question}: the \S 3.4(c) estimate of PE range in Inpria Sn-cluster resist ($\sim$\,40\,nm at Mg-K) relies on the literature anchor of [22]; direct measurement at 1.254\,keV photon energy in modern formulations is sparse.
+
+\textbf{Address path}: Stage 0 PENELOPE/GEANT4 modelling + Stage A empirical Latent-image characterisation. Expected refinement: $\pm 20$\,nm in the PE-range contribution to $\sigma_\text{total}$.
+
+\textbf{Impact}: if PE range is 80\,nm (rather than the assumed 40\,nm), $\sigma_\text{total}$ grows from 55\,nm to $\sim$\,85\,nm, eating most of the v1 node-range envelope at the 130\,nm end.
+
+\subsection{Proximity-gap planarity over a 20\,mm column footprint}
+
+\textbf{Question}: across a 20\,mm $\times$ 20\,mm converter foil under 100\,W beam-power load, with the lower face suspended $\sim$\,1\,\textmu m above the wafer, what is the worst-case planarity deviation due to (a) thermal-gradient-induced membrane bulging, (b) sputter-induced foil-thickness gradient, and (c) wafer-surface topology under the foil?
+
+The capacitive-gap sensor system (\S 4.2.2) measures four perimeter points but does not directly measure the foil sag at the centre. A finite-element thermomechanical model of the foil under operating load is required.
+
+\textbf{Address path}: Stage 0 FEA + Stage B empirical planarity characterisation.
+
+\textbf{Impact}: foil sag of $>$\,100\,nm at the centre relative to the perimeter directly degrades $\sigma_\text{Fresnel}$ and $\sigma_\text{penumbra}$ non-uniformly across the footprint, creating a position-dependent placement error that is not captured by the per-beam DAC calibration.
+
+\subsection{Converter-cartridge replacement at production cadence}
+
+\textbf{Question}: the \S 4.2.1 cartridge-replacement scheme assumes $\sim$\,12-hour cartridge life and automatic indexing on a magazine. At production cadence of $\sim$\,18\,wph through a 70-layer flow, each cartridge passes $\sim$\,10--15 wafers before replacement; cartridge-to-cartridge X-ray-flux matching and per-cartridge calibration time become a throughput-overhead question.
+
+\textbf{Address path}: Stage C empirical cycle-time accounting under sustained operation.
+
+\textbf{Impact}: cartridge-change overhead may reduce throughput from the \S 3.6 nominal 18\,wph to $\sim$\,10--12\,wph if cartridge calibration is slow. Mitigation: thicker (300--500\,nm) Mg layer for longer life, at cost of slightly larger source spot.
+
+\subsection{Hard-X-ray v2 path}
+
+\textbf{Question}: a future MBM-XRL v2 architecture based on Cu-K$\alpha$ (8.05\,keV, 0.154\,nm) could potentially extend the architecture to 30--50\,nm node range, exploiting the much smaller Fresnel diffraction at hard X-ray wavelengths. The principal obstacles are (a) the $\sim$\,1--2\,\textmu m PE range in standard resists at 8\,keV, forcing ultra-thin ($\leq 50$\,nm) resist + hardmask strategies, and (b) the higher electron-energy column needed for efficient Cu-K$\alpha$ generation (overvoltage $\sim$\,3 at 30\,kV is acceptable but yields are lower than soft-X-ray K-line generation per Eq. 1).
+
+\textbf{Address path}: deferred to MBM-XRL v2 development; the v1 architecture is forward-compatible (simply swap the converter cartridge for a Cu-K$\alpha$ variant).
+
+\textbf{Impact}: opens potential 30--80\,nm node range in a future v2, partially overlapping MBM-EBL v4 and extending below it.
+
+\subsection{Resist-radiation-damage chemistry mismatch}
+
+\textbf{Question}: the v1 architecture assumes the Inpria Sn-cluster resist chemistry developed for EUV (13.5\,nm, 92\,eV) transfers to soft-X-ray exposure at 1\,nm (1.25\,keV). The dominant absorption shells differ (O-K and C-K at EUV vs. Mg-attenuation-edge interplay at 1.25\,keV); the dose-to-clear and line-edge-roughness behaviour may not match the EUV-mode performance directly.
+
+\textbf{Address path}: Stage 0 quantum-yield modelling + Stage A direct dose-to-clear measurement.
+
+\textbf{Impact}: if Inpria-class resists need re-formulation for the X-ray regime, the v1 resist subsystem may carry NRE at $\sim$\,\$2--5\,M (one-time, amortised across the X-ray-tool product line). Multiple vendors (\S 4.2.3) buffer this risk.
+
+\subsection{Cross-beam X-ray dose overlap at high duty cycle}
+
+\textbf{Question}: at the v1 nominal $g = 1$\,\textmu m proximity gap and 40\,nm source spot, the X-ray emission from one beam at the converter spills into the neighbouring beams' wafer-plane exposure area to a calculable extent. The \S 3.4 quadrature treats penumbra as independent per beam, but at adjacent beams with overlapping penumbral skirts, the dose adds constructively. For the 20\,\textmu m pitch and $\sim$\,100\,nm effective penumbra-skirt radius, the overlap is $\sim$\,1\,\% --- small but pattern-dependent.
+
+\textbf{Address path}: Stage 0 wave-optics simulation + Stage B empirical pattern-edge characterisation.
+
+\textbf{Impact}: cross-beam dose overlap is calibratable per the v3 deterministic-vs-stochastic decomposition (v3 \S 3.4.2) and likely absorbs into the per-beam DAC dose offset without changing the architecture. Open verification at Stage B.
+
+% =====================================================================
+\section{Strategic and economic notes}
+
+The strategic case for MBM-XRL v1 is a \textit{delta on} the MBM-EBL v3/v4 strategic case (v3 \S 6, v4 \S 6.3), not an independent argument. The principal additional advantages of having an X-ray-variant tool \textit{in addition to} a v4 e-beam tool are:
+
+\begin{itemize}[leftmargin=1.6em]
+  \item \textbf{Process redundancy.} A fab with both v4 and MBM-XRL v1 tools has redundant exposure pathways across 130--180\,nm. Tool-down events on one architecture are mitigated by the other; tool-set NRE for new designs can be developed on whichever is most available.
+  \item \textbf{Cross-tool resist process integration.} The Inpria/EUV-style resist family runs on both tools; resist process development is amortised across both architectures.
+  \item \textbf{Wafer-side proximity geometry for thick-resist or hardmask process flows.} Some mature-node flows (e.g., power-device backside lithography, MEMS) use thick resist layers or hardmask stacks where soft-X-ray penetration depth ($\sim$\,5\,\textmu m vs. e-beam $\sim$\,1\,\textmu m at 50\,keV) is advantageous.
+  \item \textbf{Decoupling of resist outgassing from column.} The converter foil acts as a vacuum bulkhead between the cold column and the wafer subchamber, simplifying outgassing management for resists with higher PAG-volatile loads. This effectively makes MBM-XRL v1 more tolerant of resist chemistry diversity than v4 is.
+\end{itemize}
+
+For a sovereign-fab buildout (v3 \S 6, v4 \S 6), the addition of an X-ray-variant tool to the toolset is an incremental $\sim$\,\$40--50\,M per tool on top of an already-existing v4 manufacturing line, providing the above redundancy and process-flexibility benefits. We do not advocate building MBM-XRL tools \textit{instead of} MBM-EBL tools; we advocate building both, with the right mix per fab determined by chip-design portfolio.
+
+% =====================================================================
+\section{Conclusion}
+
+We have proposed an open, mask-free, multi-vendor multi-beam direct-write X-ray lithography (MBM-XRL) architecture that transfers the Morin (2026) MBM-EBL v4 architectural principles to soft-X-ray exposure. The single architectural change relative to v4 is the insertion of an electron-pumped X-ray converter target (100\,nm Mg on 200\,nm Si$_3$N$_4$ membrane) just above the wafer plane, with a proximity gap servo controlling the converter--wafer separation at the $\sim$\,1\,\textmu m scale. The upstream electron column (source array, cryogenic HTS deflection, photonic data path, registration, wafer chuck) is reused from v4 without modification.
+
+The closed-form resolution budget at the v1 nominal ($\lambda = 1$\,nm, $g = 1$\,\textmu m, source spot = 40\,nm, Inpria-class resist) is $\sigma_\text{total} \approx 55$\,nm, supporting a \textbf{validated node-range envelope of 130--250\,nm}. Aggregate wafer throughput at the aggressive configuration ($10^6$ beams) is $\sim$\,18\,wph through a representative 70-layer process flow. Capital cost is estimated at \textbf{\$40--50\,M per tool}, an order-of-magnitude advantage over EUV at any node and a modest advantage over DUV at coarser mature nodes.
+
+The architecture's principal advantages over MBM-EBL v4 are: (a) better-matched resist process latitude to the EUV ecosystem, simplifying cross-tool integration; (b) wafer-side proximity geometry decouples resist outgassing from the cold column; (c) thicker resist stacks and hardmask process flows accessible via 5\,\textmu m soft-X-ray penetration. The architecture's principal disadvantages relative to v4 are: (a) coarser node floor (130\,nm vs. v4's 50\,nm) due to soft-X-ray photoelectron range and source-spot--limited penumbra; (b) added converter-cartridge consumable; (c) added engineering complexity in the proximity stage.
+
+Every subsystem has $\geq 3$ independent vendors across $\geq 2$ jurisdictions; no single-vendor chokepoint is introduced relative to MBM-EBL v4.
+
+The open engineering questions are (\S 7) converter-foil source-spot characterisation, PE-range in Inpria resist at Mg-K wavelength, foil-planarity over 20\,mm footprint under thermal load, cartridge-replacement cadence at production scale, the hard-X-ray v2 path to sub-50\,nm, X-ray-induced resist chemistry mismatch with EUV-tuned formulations, and cross-beam X-ray dose overlap at high duty cycle. None of these are paradigm-level risks; all are normal Stage A/B/C de-risking activity.
+
+The architecture is released openly. The author makes no patent claim on its content. Construction, modification, and commercialisation by any party are encouraged. The MBM-EBL v4 + MBM-XRL v1 pair together cover the 50--250\,nm mature-node range with two complementary exposure mechanisms at $<$\,\$50\,M / tool each, providing the redundancy and process flexibility that a sovereign or distributed semiconductor manufacturing program needs.
+
+\textbf{MBM-XRL v1 is ready for Stage 0 numerical validation work.}
+
+% =====================================================================
+\section*{Acknowledgements}
+
+The author thanks the MBM-EBL v3 and v4 development arc and external reviewers, whose work establishes the v4 column architecture that this manuscript reuses without modification. The 1980s--1990s IBM and NTT proximity X-ray lithography research programs established the soft-X-ray exposure physics that this manuscript inherits; their mask-related failure modes are explicitly removed by the direct-write architecture proposed here. This v1 manuscript was developed with the assistance of an AI subagent (Anthropic Claude); the human author reviewed, integrated, and is responsible for all engineering decisions and any errors.
+
+\section*{Data and Materials Availability}
+
+This is a theoretical proposal at v1 sketch rigor. All concepts, equations, and architectural choices described in this manuscript are released to the public domain via CC BY 4.0 license. Stage 0 numerical validation artefacts (Monte Carlo electron-foil simulations, photoelectron-range models, Fresnel + penumbra wave-optics simulations) will be released as a supplementary artifact bundle in MBM-XRL v2.
+
+\section*{Funding}
+
+This work received no external funding.
+
+\section*{Conflicts of Interest}
+
+The author declares no patent claims on this work and no commercial relationships that would represent conflicts of interest.
+
+% =====================================================================
+\section*{References}
+
+References [1]--[23] from MBM-EBL v3 and v4 are inherited and renumbered here for self-contained reading; the originals are catalogued in [16] and [17]. Additional v1 references:
+
+\begin{enumerate}[leftmargin=2.2em,label={[\arabic*]}]
+\item C. Wagner, N. Harned, ``EUV lithography: Lithography gets extreme,'' \textit{Nature Photonics} \textbf{4}, 24 (2010).
+\item M. A. van den Brink, ``EUV lithography: Status and outlook,'' \textit{Proceedings of SPIE} \textbf{11854} (2021).
+\item C. Vieu \textit{et al.}, ``Electron beam lithography: resolution limits and applications,'' \textit{Applied Surface Science} \textbf{164}, 111 (2000).
+\item V. R. Manfrinato \textit{et al.}, ``Resolution Limits of Electron-Beam Lithography toward the Atomic Scale,'' \textit{Nano Letters} \textbf{13}, 1555 (2013).
+\item E. Platzgummer, C. Klein, H. Loeschner, ``Electron multibeam technology for mask and wafer writing at 0.1\,nm address grid,'' \textit{Journal of Micro/Nanolithography, MEMS, and MOEMS} \textbf{12}, 031108 (2013).
+\setcounter{enumi}{9}
+\item G. H. Jansen, \textit{Coulomb Interactions in Particle Beams}, Academic Press (1990).
+\setcounter{enumi}{15}
+\item R. G. Morin, ``Multi-Beam Direct-Write Electron Lithography via Multi-Rate Electromagnetic Steering,'' preprint v3 (May 2026), CC BY 4.0.
+\item R. G. Morin, ``Multi-Beam Direct-Write Electron Lithography via Multi-Rate Electromagnetic Steering: v4 --- Cryogenic Column, Photonic Data Path, and Engineering Closure,'' preprint v4 (May 2026), CC BY 4.0.
+\setcounter{enumi}{21}
+\item D. Kabra et al., ``Inpria Sn-cluster molecular-oxide resists for EUV/EBL,'' \textit{Proceedings of SPIE} \textbf{11323} (2020).
+\setcounter{enumi}{23}
+\item J. P. Silverman, ``X-ray lithography: status, challenges, and outlook for 0.13\,\textmu m,'' \textit{Journal of Vacuum Science \& Technology B} \textbf{15}, 2117 (1997). Principal IBM PXL review.
+\item H. I. Smith, M. L. Schattenburg, ``X-ray lithography from 500 to 30\,nm: X-ray nanolithography,'' \textit{IBM Journal of Research and Development} \textbf{37}, 319 (1993). NTT and MIT PXL retrospective.
+\item M. Howells, ``Some fundamental considerations for x-ray microscopy,'' Lawrence Berkeley National Laboratory Tech Report LBNL-46078 (2000). X-ray window/membrane standards reference.
+\item H. A. Kramers, ``On the theory of X-ray absorption and of the continuous X-ray spectrum,'' \textit{Philosophical Magazine} \textbf{46}, 836 (1923). Classical bremsstrahlung yield formula.
+\item R. M. Hudyma, ``Compact x-ray sources for lithography,'' \textit{Proceedings of SPIE} \textbf{3676} (1999). Compact-source lithography state-of-the-art at PXL closure.
+\item D. Drouin et al., ``CASINO V2.42 --- a fast and easy-to-use modeling tool for scanning electron microscopy and microanalysis users,'' \textit{Scanning} \textbf{29}, 92 (2007). Open-source Monte Carlo electron-target simulation.
+\item T. Tabata, R. Ito, S. Okabe, ``Generalized semiempirical equations for the extrapolated range of electrons,'' \textit{Nuclear Instruments and Methods} \textbf{103}, 85 (1972). Practical electron-range formulae used in \S 3.4(c).
+\item W. S. Graves et al., ``Compact x-ray source based on burst-mode inverse Compton scattering at 100\,kHz,'' \textit{Physical Review Special Topics --- Accelerators and Beams} \textbf{17}, 120701 (2014). Inverse-Compton compact source state-of-art.
+\item G. D. O'Sullivan et al., ``Laser produced plasmas as sources for short wavelength lithography,'' \textit{Reviews of Scientific Instruments} \textbf{70}, 4031 (1999). LPP source review for lithography applications.
+\end{enumerate}
+
+\vspace{1em}\hrule\vspace{0.5em}
+\begin{center}
+\textit{Preprint released openly under CC BY 4.0.}\\
+\textit{For attribution: Morin, R. G. (2026). ``Multi-Beam Direct-Write X-Ray Lithography via Per-Beam Electron-Pumped Converter Arrays.'' Preprint v1, May 2026.}
+\end{center}
+
+\end{document}

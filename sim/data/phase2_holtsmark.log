@@ -1,0 +1,38 @@
+========================================================================
+ Phase 2 — Loeffler-Jansen via Holtsmark / Jansen evaluation
+ v4 nominal: I_b=2 nA, V0=50 kV, L=100 mm
+========================================================================
+
+Analytical Jansen (k=0.214 σ-RMS form):
+  σ_LJ = 0.000 nm at v4 nominal
+
+Jansen with uncertainty band (k_h ∈ [0.214, 0.31], a ∈ [0.62, 0.70]):
+  Low:  0.000 nm
+  Med:  0.000 nm
+  High: 0.000 nm
+
+Calibration cross-check (IMS Nano: I_b=0.5 nA, L=50 mm, V0=50 kV):
+  Jansen predicts σ_LJ = 0.000 nm
+  IMS reported total placement < 2 nm (attribution ~1 nm to LJ)
+
+Direct Monte Carlo (Holtsmark field on probe):
+  N_neighbors=1000, 500 realisations, slice_L=9.91 m
+  σ_LJ (MC) = 0.016 nm   (0.0s)
+
+Current sweep (verify I^(2/3) Jansen scaling):
+    I_b (nA)    σ_analytical (nm)       σ_MC (nm)   I^(2/3) ratio
+        0.50                0.000           0.001           0.397
+        1.00                0.000           0.005           0.630
+        2.00                0.000           0.040           1.000
+        5.00                0.000           0.623           1.842
+       10.00                0.000           4.986           2.924
+
+→ phase2_holtsmark.csv
+
+========================================================================
+ v4 nominal verdict (2 nA, 50 kV, 100 mm):
+  IMS-scaled estimate (preprint §3.4.7): 7 nm
+  Analytical Jansen (this script):       0.00 nm
+  Direct Monte Carlo (this script):      0.02 nm
+  Jansen uncertainty band:               [0.00, 0.00] nm
+========================================================================

@@ -1,0 +1,107 @@
+[init] Stationary Gaussian beam: peak flux = 1.036e+05 W/m^2 (sigma=10 mm, FWHM=23.6 mm)
+[init] Scanned uniform load    : flux      = 919.6 W/m^2 (= 65 W / disk area)
+[init] h_rad (linearized)          = 2.038 W/m^2/K
+[init] equivalent radiation T sink = 221.592 K
+[init] mesh: N_r x N_z = 100 x 30 = 3000 cells (2900 unknowns after Dirichlet bottom)
+
+Building sparse FV systems ...
+  built in 0.01 s, nnz = 14740
+
+========================================================================
+Case 1a: STATIONARY column (Gaussian sigma=10 mm), TEC trim ACTIVE
+         -- worst-case spec stress; v4 6.5 admits this case is
+         catastrophic without stage motion or wider column
+========================================================================
+[STAT TEC-ON ] direct sparse solve: 5 ms, residual ||Ax-b||_inf = 9.627e-10
+
+========================================================================
+Case 1b: STATIONARY column,  TEC trim DISABLED
+========================================================================
+[STAT TEC-OFF] direct sparse solve: 4 ms, residual ||Ax-b||_inf = 6.357e-10
+
+========================================================================
+Case 2a: SCANNED uniform 920 W/m^2 (= 65 W / wafer area),
+         TEC trim ACTIVE  -- the v4 nominal operating mode that
+         the +/-8 mK across-wafer claim refers to
+========================================================================
+[SCAN TEC-ON ] direct sparse solve: 4 ms, residual ||Ax-b||_inf = 7.340e-10
+
+========================================================================
+Case 2b: SCANNED uniform load, TEC trim DISABLED
+========================================================================
+[SCAN TEC-OFF] direct sparse solve: 4 ms, residual ||Ax-b||_inf = 6.951e-10
+
+########################################################################
+# STATIONARY column (worst-case stress test, not the spec mode)
+########################################################################
+
+--- STATIONARY  TEC ON ---
+  Wafer-top T  : min=294.93750 K  max=320.68943 K  ΔT=25751.9229 mK
+  Wafer-back T : min=294.93821 K  max=320.29489 K  ΔT=25356.6777 mK
+  Chuck-top T  : min=294.99190 K  max=297.54987 K  ΔT=2557.9763 mK
+  Chuck-bot T  : min=294.99963 K  max=295.07614 K (Dirichlet face at z=t_stack: 295 K + TEC pattern)
+  He-gap drop  : 2424.34 mK   (analytic 65W/(h_He*A_w) = 328.4 mK -- bulk offset)
+  -> α_Si * ΔT * 300 mm = 20086.500 nm  (FAIL 6 nm placement budget)
+
+--- STATIONARY  TEC OFF ---
+  Wafer-top T  : min=294.91692 K  max=320.70791 K  ΔT=25790.9876 mK
+  Wafer-back T : min=294.91761 K  max=320.31339 K  ΔT=25395.7750 mK
+  Chuck-top T  : min=294.96933 K  max=297.57138 K  ΔT=2602.0504 mK
+  Chuck-bot T  : min=294.97276 K  max=295.10540 K (Dirichlet face at z=t_stack: 295 K + TEC pattern)
+  He-gap drop  : 2424.05 mK   (analytic 65W/(h_He*A_w) = 328.4 mK -- bulk offset)
+  -> α_Si * ΔT * 300 mm = 20116.970 nm  (FAIL 6 nm placement budget)
+
+########################################################################
+# SCANNED uniform load (the v4 +/-8 mK spec applies HERE)
+########################################################################
+
+--- SCANNED  TEC ON ---
+  Wafer-top T  : min=295.32123 K  max=295.32136 K  ΔT=0.1307 mK
+  Wafer-back T : min=295.31759 K  max=295.31772 K  ΔT=0.1308 mK
+  Chuck-top T  : min=295.04124 K  max=295.04139 K  ΔT=0.1474 mK
+  Chuck-bot T  : min=295.00133 K  max=295.00152 K (Dirichlet face at z=t_stack: 295 K + TEC pattern)
+  He-gap drop  : 276.34 mK   (analytic 65W/(h_He*A_w) = 328.4 mK -- bulk offset)
+  -> α_Si * ΔT * 300 mm = 0.102 nm  (PASS 6 nm placement budget)
+
+--- SCANNED  TEC OFF ---
+  Wafer-top T  : min=295.30064 K  max=295.33984 K  ΔT=39.1956 mK
+  Wafer-back T : min=295.29699 K  max=295.33622 K  ΔT=39.2282 mK
+  Chuck-top T  : min=295.01868 K  max=295.06290 K  ΔT=44.2215 mK
+  Chuck-bot T  : min=294.97446 K  max=295.03079 K (Dirichlet face at z=t_stack: 295 K + TEC pattern)
+  He-gap drop  : 276.05 mK   (analytic 65W/(h_He*A_w) = 328.4 mK -- bulk offset)
+  -> α_Si * ΔT * 300 mm = 30.573 nm  (FAIL 6 nm placement budget)
+
+v4 spec (applies to SCANNED, stage-averaged): ΔT_wafer < ±7.7 mK
+  (=> alpha_Si * ΔT * 300 mm < 6 nm placement budget)
+  SCANNED  TEC ON  : ΔT = 0.1307 mK   -->  PASS
+  SCANNED  TEC OFF : ΔT = 39.1956 mK  -->  FAIL
+  STATIONARY TEC ON: ΔT = 25751.9 mK  --  catastrophic, as v4 6.5 admits (requires stage motion or 50 mm column geometry)
+
+Residual decomposition (SCANNED, TEC ON):
+  Wafer-top centre - edge      = 0.1192 mK
+  Wafer-top centre - mean      = 0.0645 mK
+  He-gap drop spread (max-min) : 0.0170 mK
+  He-gap drop mean             : 276.34 mK
+
+Figure written: figure_phase3_wafer_fea.{pdf,png}
+
+========================================================================
+SUMMARY
+========================================================================
+  Beam power deposited            : 65.0 W total
+  He-gap bulk offset (SCANNED)    : 276.3 mK  (analytic 65 W / (h_He*A_w) = 328.4 mK -- bulk, not spatial)
+
+  STATIONARY column (Gaussian σ=10 mm), worst-case test:
+    Wafer ΔT_max TEC ON       : 25751.9 mK (20086 nm)  -- CATASTROPHIC, as v4 §6.5 admits
+    Wafer ΔT_max TEC OFF      : 25791.0 mK (20117 nm)
+
+  SCANNED uniform 920 W/m² (the v4 ±8 mK spec mode):
+    Wafer ΔT_max TEC ON       : 0.1307 mK  (placement 0.1019 nm)
+    Wafer ΔT_max TEC OFF      : 39.1956 mK (placement 30.5726 nm)
+    v4 spec (ΔT < ±7.7 mK)    : TEC ON  PASS,   TEC OFF FAIL
+    TEC suppression ratio     : 300.0× (the 36-zone trim suppresses the microchannel pattern)
+
+  Dominant residual gradient sources (SCANNED, TEC ON):
+    He-gap drop variation across r  = 0.0170 mK
+    Chuck-top T variation across r  = 0.1474 mK
+    -> Wafer-top spread             = 0.1307 mK

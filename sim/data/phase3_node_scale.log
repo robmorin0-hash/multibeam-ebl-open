@@ -1,0 +1,19 @@
+============================================================================
+ Phase 3c — v4 node-scale accessibility
+============================================================================
+
+v4 architectural floor (I → 0, optics+stage only):
+  σ_total floor = √(1.0² + 1.0²) = 1.41 nm
+  Min node accessible:   7.1 nm
+  (Below this: resist + spot-size limits dominate, ~3-5 nm)
+
+Operating points:
+       I_b    σ_total   Min node   Throughput
+      (nA)       (nm)       (nm)        vs v4
+      5.00      12.53       62.6         2.50×
+      2.00       6.66       33.3         1.00×
+      1.00       4.27       21.3         0.50×
+      0.50       2.88       14.4         0.25×
+      0.10       1.65        8.2         0.05×
+
+→ figure_phase3_node_scale.pdf, .png

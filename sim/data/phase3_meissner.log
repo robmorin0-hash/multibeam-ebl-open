@@ -1,0 +1,37 @@
+============================================================================
+ Phase 3b — YBCO Meissner shield attenuation analysis
+============================================================================
+
+v4 geometry: shield t = 10.0 μm, pitch P = 20 μm, column height h = 100 μm
+YBCO at 77 K: London penetration depth λ_L ≈ 200 nm
+
+Contributions to attenuation:
+  London penetration (d/λ_L = 50):  434 dB (theoretical max)
+  Edge leakage over shield top (h=100 μm, P=20 μm):  20.8 dB
+
+Defect-limited attenuation (dominates in practice):
+
+  Film quality                         Attenuation
+  Conservative (commercial 2G tape)         80 dB
+  Mid-quality (research-grade PLD)         100 dB
+  High-quality (SQUID-grade)               120 dB
+
+Net attenuation (min of theoretical and defect-limited):
+
+  Conservative (commercial 2G tape)  : 80 dB  (PASS (>80 dB))
+  Mid-quality (research-grade PLD)   : 100 dB  (PASS (>80 dB))
+  High-quality (SQUID-grade)         : 120 dB  (PASS (>80 dB))
+
+Compared to DAC noise floor:
+  16-bit DAC LSB: 20·log10(1/65536) = -96 dB
+  For Meissner shield to be "no longer a budget item":
+    need attenuation > 96 dB (puts crosstalk below DAC quantization)
+
+Pitch sensitivity (defect-limited, conservative 1e8 quality):
+  P =   5 μm  →  attenuation = 80 dB
+  P =  10 μm  →  attenuation = 80 dB
+  P =  20 μm  →  attenuation = 80 dB
+  P =  50 μm  →  attenuation = 80 dB
+  P = 100 μm  →  attenuation = 80 dB
+
+→ figure_phase3_meissner.pdf, .png

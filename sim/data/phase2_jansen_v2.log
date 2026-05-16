@@ -1,0 +1,42 @@
+============================================================================
+ Phase 2 (corrected) — Jansen Loeffler-Jansen for v4 architecture
+============================================================================
+
+1. v4 nominal: I_b = 2.0 nA, V0 = 50.0 kV, L = 100.0 mm
+   σ_LJ (Jansen, pencil-beam K=1.587) = 7.13 nm  (FW50)
+   σ_LJ_rms = FW50/1.18              = 6.04 nm
+   Band (K∈[1.2,2.0], g∈[1,1.5]): [5.39, 13.47] nm FW50  = [4.57, 11.41] nm RMS
+
+2. IMS Nano MBMW calibration anchor:
+   At I=0.5 nA, L=50 mm, V0=50 kV → σ_LJ_pred = 1.000 nm
+   Published total placement <2 nm; LJ attribution ~1 nm → consistent
+
+3. Boersch energy spread at v4 nominal:
+   ΔE = 1.347 eV FW50
+   Chromatic aberration coeff C_c ≈ 50 μm (well-designed EBL column):
+   σ_B ≈ (ΔE/V0) × C_c = (1.347/50000) × 50 μm = 1.35 nm
+
+4. Parameter sweep — σ_LJ (RMS, nm) vs current and drift:
+                 L=50mm     L=100mm     L=150mm     L=200mm
+   I=  0.5nA       0.847       2.396       4.402       6.778
+   I=  1.0nA       1.345       3.804       6.988      10.759
+   I=  1.5nA       1.762       4.985       9.157      14.099
+   I=  2.0nA       2.135       6.038      11.093      17.079
+   I=  3.0nA       2.798       7.913      14.536      22.380
+   I=  5.0nA       3.933      11.123      20.434      31.460
+   I= 10.0nA       6.243      17.657      32.437      49.940
+
+5. Total v4 placement budget (quadrature, at I=2 nA):
+   σ_cross     = 2.00 nm  (Phase 1, Eq. 6)
+   σ_LJ        = 6.04 nm  (Jansen, this script)
+   σ_B         = 1.35 nm  (Boersch+chromatic)
+   σ_stage     = 1.00 nm  (registration loop)
+   σ_column    = 1.00 nm  (optical aberration)
+   σ_TOTAL     = 6.65 nm  (quadrature sum)
+   Node range: 20% budget requires σ < node/5
+                30 nm node →  6 nm   FAIL by 1.1×
+                50 nm node →  10 nm  PASS
+                90 nm node →  18 nm  PASS
+                180 nm node → 36 nm  PASS
+
+→ phase2_jansen.csv, figure_phase2.pdf, figure_phase2.png

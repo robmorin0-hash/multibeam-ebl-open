@@ -1,0 +1,394 @@
+\documentclass[11pt,letterpaper]{article}
+
+% --- packages ---------------------------------------------------------
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{hyperref}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{fancyhdr}
+\usepackage{titling}
+\usepackage{enumitem}
+\usepackage{mdframed}
+\usepackage{textcomp}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=NavyBlue,
+  citecolor=NavyBlue,
+  urlcolor=NavyBlue
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small Stage A Build Manual --- v1, May 2026}
+\fancyhead[R]{\small Morin --- Multi-Beam EBL v5}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.3pt}
+
+\setlength{\droptitle}{-2em}
+
+\title{\Large \textbf{Stage A Prototype Build Manual}\\[0.3em]
+  \large Multi-Beam Direct-Write Electron Lithography (v5)\\[0.2em]
+  \normalsize \textit{Bench-Level Assembly Guide for the 1--4 Beam Validator}}
+\author{Robert Gerald Morin\textsuperscript{1,*}\\[0.4em]
+  {\small \textsuperscript{1}N\^{I}KI Nation Builders, Edmonton, Alberta, Canada}\\
+  {\small \textsuperscript{*}Correspondence: \href{mailto:robmorin0@gmail.com}{robmorin0@gmail.com}}}
+\date{Build manual v1 --- May 16, 2026\\[0.3em]
+  {\small\textit{Companion document to the v5 preprint and the v4 supplementary
+  specifications. Tells someone in a lab how to take the v4 Stage A bill of
+  materials and physically assemble it into a working 1--4 beam validator of
+  the v4/v5 architecture, in 18 weeks of build followed by a 6-test
+  validation campaign of 30 weeks. Released CC BY 4.0 alongside the v5
+  paper.}}}
+
+\begin{document}
+\maketitle
+\thispagestyle{fancy}
+
+% --- open-release banner ---------------------------------------------
+\begin{mdframed}[linewidth=0.5pt,backgroundcolor=gray!4]
+\textbf{Open Release.} This work is released under a Creative Commons Attribution 4.0 International License (CC BY 4.0). It may be freely copied, modified, built, commercialised, or extended by anyone, for any purpose, with attribution to the author.
+\end{mdframed}
+
+% =====================================================================
+\section{What you're building}
+
+\textbf{Stage A is the 1--4 beam validator of the v5 architecture.} Capital cost: \$600\,k (hardware + 18 months engineer labour, per v4 \S BOM). Build time: 18 weeks from parts delivery to first electron beam on a fluorescent screen, then a 30-week integrated test campaign that exercises six independent validation experiments.
+
+What Stage A is \textit{for}:
+
+\begin{itemize}[leftmargin=1.6em]
+  \item Prove that the cryogenic 77\,K column actually works at single-beam scale --- that YBCO planar Helmholtz coils deflect a 50\,kV electron beam linearly, with sub-10\,\textmu s settling, and that AC losses fit the predicted $\sim$\,0.5\,W budget.
+  \item Prove the Meissner shield attenuates a switched coil field by $\geq$\,80\,dB at 20\,\textmu m distance, using a second (neighbour) beam as the probe.
+  \item Prove the cryo-CMOS 16-bit DAC at 77\,K closes the loop end-to-end from an off-the-shelf SFP+ optical TX to a YBCO coil current, with INL $\leq$\,1\,LSB, DNL $\leq$\,0.5\,LSB, and $<$\,10\,\textmu s settling.
+  \item Prove BSE registration loop closure: scan the beam over a fiducial wafer, read backscattered electrons through an El-Mul detector, run a feedback loop that holds the beam to $<$\,2\,nm RMS over 1\,mm of field.
+  \item Prove cryosorption pump-down: expose an HSQ-coated wafer, watch the residual gas analyser spectrum, verify the cold column captures $\geq$\,50\,\% of the outgassing burst on first impact.
+  \item Prove the wafer chuck can hold $\pm$50\,mK under a 250\,mW scaled-down beam deposition load.
+\end{itemize}
+
+What Stage A is \textit{not} for: it does not validate the $10^6$-beam aggregate performance (that's Stage B, \$5\,M), it does not validate the 50\,Tbps full photonic transport (Stage B), it does not produce production-grade wafers (Stage C/D), and it does not measure throughput (no throughput is meaningful with 1--4 beams).
+
+If Stage A passes all six tests, the v4/v5 architecture is empirically de-risked, the v5 software stack has working hardware to bring up against, and the program is ready for the Stage B (16--64 beam) parallel-column build at \$3--5\,M.
+
+% =====================================================================
+\section{Physical layout --- the bench}
+
+The whole tool fits on a single optical bench. The dimensions, isolation, and layout below are minimum-acceptable; if you have a bigger optical lab, use it.
+
+\paragraph{Bench.}
+\begin{itemize}[leftmargin=1.6em]
+  \item Newport (or equivalent) sealed honeycomb optical-flat granite bench, 1.5\,m $\times$ 1.5\,m $\times$ 0.30\,m. Granite (not steel) because vibration response is flatter to high frequency, which matters for the BSE registration loop.
+  \item Mass: $\sim$\,600\,kg. Floor must support 800\,kg/m$^2$ point load. Verify with your building engineer before delivery; granite slabs have broken garage-style raised floors before.
+  \item Four pneumatic isolators (Newport S-2000 or Thorlabs PWA075) under each corner. Self-levelling air bladders, $\sim$\,0.5\,Hz isolation corner, $>$\,30\,dB isolation above 5\,Hz.
+  \item \textbf{Vibration target: $<$\,5\,nm RMS at the wafer plane} in the 1\,Hz -- 10\,kHz band. Verify with a Polytec or Bruker laser-Doppler vibrometer before any electron-column work. The cryocooler compressor must be off-bench, on a separate vibration-isolated pad on the floor, with the He hose looped to decouple the residual 50\,/\,60\,Hz compressor harmonics.
+\end{itemize}
+
+\paragraph{Layout (top-down, Figure~\ref{fig:bench}).}
+The UHV chamber sits at the bench centre, with the cryostat stacked above it. The CFE electron gun mounts as a side flange on the upper-left port; the BSE detector mirrors it on the upper-right port. The wafer load-lock is back-top, the fiber feedthrough is back-top-right, and the turbo + ion pump stack hangs underneath the chamber, off the bottom port. The ZMI interferometer head sits external, on the lower-right of the bench, looking into a viewport on the lower chamber wall. The 19" control rack lives off-bench (right side, on its own caster frame); a single armoured fiber bundle runs from the rack into the chamber's optical feedthrough.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.85\textwidth]{build_fig1_bench.pdf}
+\caption{Bench top-down layout. 1.5\,m $\times$ 1.5\,m granite slab on four pneumatic isolators. UHV chamber at centre, cryostat stacked above, source-gun side-mounted on the upper-left port, BSE detector mirroring on the upper-right, pumping stack under the chamber bottom, fiber feedthrough back-top-right, ZMI interferometer external lower-right.}
+\label{fig:bench}
+\end{figure}
+
+% =====================================================================
+\section{The vacuum chamber stack}
+
+\paragraph{Chamber.} Off-the-shelf 8" CF UHV chamber, Pfeiffer or Kurt J. Lesker (316L stainless, electropolished interior, helium-leak-tested to $1 \times 10^{-9}$\,Torr$\cdot$L/s at the vendor). Internal volume $\sim$\,12\,L. Six CF ports plus the top and bottom mating flanges:
+
+\begin{center}
+\small
+\begin{tabular}{lll}
+\toprule
+\textbf{Port} & \textbf{Size} & \textbf{Function} \\
+\midrule
+Top (axis)         & 8" CF    & Cryostat cold-finger entry (custom bellows + 8" CF flange) \\
+Bottom (axis)      & 6" CF    & Pumping stack (turbo + ion pump) \\
+Side, upper-left   & 4.5" CF  & CFE source gun \\
+Side, upper-right  & 4.5" CF  & BSE detector \\
+Side, lower-right  & 2.75" CF & Viewport (ZMI interferometer read-through) \\
+Side, back         & 4.5" CF  & Wafer load-lock gate valve \\
+Side, back-upper   & 2.75" CF & Optical fiber feedthrough (Accu-Glass 32-fiber) \\
+Side, lower-left   & 2.75" CF & Electrical feedthrough (HV + thermocouples) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{Bake-out heaters.} Tape heaters (200\,$^\circ$C max) on every external CF flange plus the chamber body. Thermocouples (K-type) at the flange centres and on the chamber body at top, middle, and bottom. A small control unit (e.g. Watlow EZ-Zone PM, $\sim$\,\$500) handles the ramp profile.
+
+\paragraph{Pumping sequence (from atmosphere to UHV base).}
+\begin{enumerate}[leftmargin=1.6em]
+  \item Scroll/diaphragm roughing pump (Edwards nXDS-10i or Pfeiffer HiScroll 6). Pumps chamber from atmosphere to $\sim$\,$5 \times 10^{-3}$\,Torr in $\sim$\,10\,minutes. Oil-free --- critical, no hydrocarbons in a UHV system.
+  \item Turbomolecular pump (Pfeiffer HiPace 80 or HiPace 300, magnetically levitated rotor preferred for vibration). Pumps to $\sim$\,$5 \times 10^{-8}$\,Torr in $\sim$\,2\,hours. Backing line connects to the roughing pump.
+  \item Ion pump (Gamma Vacuum 75\,L/s or Agilent VacIon Plus 75). Takes over after bake-out; pumps to base pressure of $\sim$\,$5 \times 10^{-10}$\,Torr indefinitely. No moving parts in the high-vacuum regime, no vibration contribution.
+\end{enumerate}
+
+The turbo runs continuously during operation; the ion pump is for true UHV hold. A residual gas analyser (RGA --- Stanford Research Systems RGA-100, \$6\,k) sits on a 2.75" CF tee in the pumping line for diagnostics and for the cryosorption test in \S\,\ref{sec:firstlight}.
+
+\paragraph{Assembly sequence --- chamber.}
+\begin{enumerate}[leftmargin=1.6em]
+  \item \textbf{Clean} every CF flange face. Acetone + IPA + lint-free wipe, followed by a final wipe with vacuum-grade methanol. Wear powder-free nitrile gloves from this point onward.
+  \item \textbf{Assemble} the chamber on a clean, level work surface. Use new copper gaskets at every CF joint (never reuse). Torque CF bolts in a star pattern, three passes: 25\,\%, 75\,\%, 100\,\% of the spec value (typically 12\,ft-lb for 8" CF, 7\,ft-lb for 4.5" CF, 4\,ft-lb for 2.75" CF).
+  \item \textbf{Helium-leak test.} Connect a helium leak detector (Pfeiffer ASM 340 or equivalent) to the foreline of the turbo, pull rough vacuum, and bag-spray each flange with helium for 60 seconds. Reject any flange showing $>$\,$1 \times 10^{-9}$\,Torr$\cdot$L/s. Plan on re-doing at least one flange --- fresh-bolted CFs sometimes need a quarter-turn after the first pump-down.
+  \item \textbf{Bake.} 120\,$^\circ$C for 48 hours minimum, all heaters on, ion pump valved off (it does not like the bake heat). Continuous turbomolecular pumping throughout. Bake limits are set by the \textit{coolest} component in the chamber: the YBCO coil assembly cannot exceed 80\,$^\circ$C, so bake the empty chamber to 120\,$^\circ$C first, then re-introduce the cold-finger assembly under positive N$_2$ purge before the next pump-down (see \S\,\ref{sec:cryo}).
+\end{enumerate}
+
+After bake and cooldown, the base pressure should be $\leq 1 \times 10^{-9}$\,Torr without the ion pump, and $\leq 5 \times 10^{-10}$\,Torr with the ion pump on.
+
+% =====================================================================
+\section{The cryogenic stack (above the chamber)}
+\label{sec:cryo}
+
+\paragraph{Pulse-tube cold head.} Cryomech PT-90 (single-stage, 25--30\,W at 77\,K, $\sim$\,\$30\,k as of 2026). Pulse-tube is non-negotiable for an EBL build --- Gifford-McMahon coolers produce 5--50\,\textmu m displacement at the cold head from the moving displacer at 1--2\,Hz, which couples \textit{directly} into beam-placement error at the wafer. Pulse-tube coolers have no moving displacer at the cold head and deliver $<$\,100\,nm residual displacement (measured). This is the single most important component-selection decision in the build.
+
+\paragraph{He compressor.} Cryomech CP-289, water-cooled. Sits on the floor, \textbf{off the bench}, on its own vibration-isolated pad. Connect to the cold head via the supplied flexible braided high-pressure He hoses (typical 3\,m length). The hose's flex is what isolates compressor harmonics from the cold head. Tie the hose to a wall standoff midway to break the direct mechanical path further.
+
+\paragraph{Cold-finger drop into the chamber.} The PT-90 cold head body mounts to an 8" CF flange on the chamber top via a custom thin-wall stainless bellows ($\sim$\,50\,mm length). The bellows decouples cold-head residual vibration from the chamber body and accommodates thermal contraction of the cold finger ($\sim$\,0.3\,mm over 77\,K -- 295\,K). The cold finger itself is a 100\,mm OFHC copper rod, $\sim$\,25\,mm diameter, machined to a flat instrument-grade mounting platform at its bottom (the ``cold platform''), with M3 tapped holes on a 5\,mm grid for mounting the YBCO coil, Meissner shield, DAC, and photodiode.
+
+\paragraph{Thermal mass.} A 2\,kg OFHC copper block bolts to the cold-finger platform, with thermometry holes (Cernox or Lake Shore PT-100) drilled 10\,mm into the side. This block damps the temperature transients of pulsed AC loss in the coils.
+
+\paragraph{Heat-strap to first stage.} A 6\,mm $\times$ 30\,mm braided OFHC copper strap (McMaster-Carr 1278K34 or equivalent annealed) bonds the second-stage cold platform to the first-stage 150\,K shield, which intercepts radiation from the warm chamber walls.
+
+\paragraph{MLI wrap.} 30-layer aluminised Mylar / Dacron-net blanket (Ruag or Aerospace Fabrication \& Materials, $\sim$\,\$2\,k for a custom-cut blanket). Wraps the \textit{warm side only} of the cold finger. Effective emissivity $\sim$\,$5 \times 10^{-4}$. The radiative load to 77\,K through the MLI is $\sim$\,2\,mW (v4 \S X.3); without MLI it would be $\sim$\,1\,W.
+
+\paragraph{YBCO coil + Meissner shield assembly.} Patterned on a 4" sapphire wafer at SuperPower or the University of Alberta nanoFab facility (or equivalent academic clean room: NRC-NINT, UWaterloo QNC, Cornell CNF). The wafer carries the YBCO planar Helmholtz coil pair (one on each face, 30-turn spiral, 8\,\textmu m mean radius, 2\,\textmu m trace width) and an adjacent Meissner shield strip (10\,\textmu m thick YBCO film, 200 $\times$ 200\,\textmu m patch) sitting 20\,\textmu m from the coil. Both are deposited by PLD or MOCVD followed by ion-mill patterning. Sapphire is chosen for its closely-matched thermal expansion to YBCO and for its electrical insulation.
+
+The assembly mounts to the cold platform via a non-magnetic stainless steel (316LN) flexure clamp, with kapton thermal-interface tape between the sapphire and the platform. Current leads are 100\,\textmu m Au wires bonded to the YBCO pads and routed up to the cryo-CMOS DAC chip on the same platform.
+
+\paragraph{Cryo-CMOS DAC.} Imec or Fraunhofer IPMS engineering-sample 16-bit cryo current DAC, $\sim$\,\$10\,k for a single packaged die. It sits on a 5 $\times$ 5\,mm Al$_2$O$_3$ interposer with gold wire-bonds to the YBCO coil leads (output side) and to the photodiode (input side). The DAC's supply rails (1.2\,V and 3.3\,V) come in on phosphor-bronze hookup wire from a small low-dropout regulator board on the warm side, fed through the electrical CF feedthrough. The interposer mounts to the cold platform with a thin (0.2\,mm) layer of Apiezon N grease.
+
+\paragraph{Cryo-qualified InP photodiode.} Hamamatsu G12180-series (cryo-rated) or equivalent. Sits adjacent to the DAC, connected by a short ($\sim$\,cm) cryo-rated SMA cable. The photodiode receives 1310\,nm or 1550\,nm light from the photonic data path (\S\,\ref{sec:photonic}) via a polished-end single-mode fiber pigtail.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.75\textwidth]{build_fig2_chamber.pdf}
+\caption{Vacuum-chamber cross-section + cold-finger stack (side view, beam axis vertical). The Cryomech PT-90 cold head sits above the chamber, with a vibration-isolating bellows on the 8" CF flange. The OFHC copper cold finger drops into the chamber and carries the YBCO coil, Meissner shield, cryo-CMOS DAC, and InP photodiode at its tip. The CFE source gun side-mounts on the upper-left CF port; the beam mitres into the chamber axis, passes through the cold-finger payload, and lands on the wafer chuck on the PI piezo stage at the bottom.}
+\label{fig:chamber}
+\end{figure}
+
+% =====================================================================
+\section{The electron column}
+
+The electron column is deliberately minimal in Stage A: one source, one condenser lens, one HTS deflection coil. No multi-stage demagnification, no crossover optics. Stage A is not trying to be a production EBL tool --- it is trying to test the HTS deflection scheme with the smallest set of confounding variables.
+
+\paragraph{Source gun.} FEI / Thermo Fisher single-tip cold-field-emitter electron gun, off-the-shelf module ($\sim$\,\$50\,k as of 2026). 50\,kV acceleration, 5\,nA emission current at the tip aperture, $\sim$\,0.3\,eV energy spread, $\sim$\,$10^9$\,A/m$^2$/sr/V reduced brightness. The gun is a self-contained CF-mountable module --- it includes its own Wehnelt, extractor, anode, and gun-vacuum getter pump.
+
+For Stage A you can also dual-source as a ``dual-tip Wehnelt'' assembly: a single CFE module modified to host two tips (5--10\,mm apart) so that one tip serves as the primary beam and the second as the neighbour-beam crosstalk probe in test 2 (Meissner shield attenuation). This is a wiring-only modification at the vendor, $\sim$\,\$5\,k extra. Strongly recommended.
+
+\paragraph{Source mount.} The gun bolts to the upper-left 4.5" CF port via a kinematic three-point picomotor (New Focus 8302) mount. Picomotors give 30\,nm incremental travel and $\sim$\,10\,mm coarse range --- enough to walk the beam axis across the column's full aperture during alignment. \textit{Do not skip the kinematic mount.} A fixed flange-mount gun will be 100\,\textmu m to 1\,mm off-axis out of the box, which is hopeless for any kind of beam-on-coil alignment.
+
+\paragraph{Condenser optics.} A single magnetic lens (off-the-shelf scanning-electron-microscope condenser, e.g. Spectroscopy Instruments KE-1100, $\sim$\,\$15\,k), mounted inline between the gun and the cold finger. Its job is to bring the beam to a $\sim$\,1\,\textmu m waist at the YBCO coil plane.
+
+\paragraph{HTS deflection coil.} As described in \S\,\ref{sec:cryo} --- hangs from the cold finger, in the beam path $\sim$\,50\,mm below the gun, $\sim$\,50\,mm above the wafer.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.95\textwidth]{build_fig3_beampath.pdf}
+\caption{Stage A beam-path block diagram. CFE gun $\to$ single condenser magnetic lens $\to$ YBCO planar Helmholtz coil (77\,K) $\to$ 100\,mm UHV drift $\to$ wafer (295\,K). BSE detector taps backscattered electrons off the wafer; ZMI interferometer reads stage position external through a viewport. The photonic data path (bottom strip) routes the pattern stream from the SFP+ transmitter through the UHV feedthrough to the 77\,K photodiode and into the cryo-CMOS DAC that drives the coil.}
+\label{fig:beampath}
+\end{figure}
+
+% =====================================================================
+\section{The wafer stage}
+
+\paragraph{Stage.} 6-DOF piezo stage from Physik Instrumente (PI N-664 or N-731, $\sim$\,\$50\,k class). Travel range 100\,\textmu m $\times$ 100\,\textmu m in X-Y, 10\,\textmu m in Z, sub-nm position resolution, 100\,Hz closed-loop bandwidth. The 6\,DOF (X, Y, Z, $\theta_x$, $\theta_y$, $\theta_z$) lets you correct chuck tip/tilt and rotation as part of the registration loop. For Stage A's 1\,mm field, the piezo stage moves between dies, not within a die --- intra-die scanning is done by the deflection coil.
+
+\paragraph{Chuck.} Bare aluminium disc, 100\,mm OD $\times$ 15\,mm thick, with a 50\,mm centre recess to hold a 4" silicon wafer. A backside He gas line ($\sim$\,5\,Torr) supplied through a flexible Teflon tube provides thermal contact between the wafer backside and the chuck. The chuck is bolted to the top of the PI stage with non-magnetic Ti screws.
+
+Stage A doesn't need the full v4 AlN chuck + Galden microchannel + 36-zone TEC trim. That comes later, in Stage B/C, when the beam thermal load demands it. At 1--4 beams the chuck dissipation is $\sim$\,5\,mW --- passive conduction to the aluminium chuck is fine.
+
+\paragraph{ZMI interferometer.} Zygo ZMI-2000 or ZMI-4000 series (\$25\,k for a two-axis head, plus optics). The laser head sits external on the bench (cold zone), the beam goes through the lower-right viewport into the chamber, and two retroreflector cube corners are bonded to the stage with cryo-rated epoxy (Stycast 2850 FT). Two-axis (X, Y) position resolution: 0.1\,nm. Sample rate: 100\,kHz.
+
+\paragraph{BSE detector.} El-Mul Technologies SE/BSE annular detector (\$30\,k), mounted on the upper-right CF port, with its annular collection element $\sim$\,5\,mm above the wafer surface, on-axis with the beam. Output: a $\pm$5\,V analog signal, fed via a coax CF feedthrough to a fast ADC (AlazarTech ATS9462, $\sim$\,16 bits, 180\,MS/s) in the control rack.
+
+% =====================================================================
+\section{The photonic data path}
+\label{sec:photonic}
+
+\paragraph{Pattern source (warm side).} A workstation in the control rack runs the v5 GDS-II $\to$ blanker-schedule pattern compiler. Output is a single 10\,Gbps serial stream (sufficient for a 1--4 beam test) over an SFP+ optical transceiver (Cisco SFP-10G-LR, \$200) feeding a single-mode 1310\,nm fiber.
+
+\paragraph{Vacuum feedthrough.} Accu-Glass Products single-fiber CF feedthrough on a 2.75" CF flange ($\sim$\,\$2\,k). Bake-rated to 200\,$^\circ$C, hermeticity $\leq 1 \times 10^{-10}$\,Torr$\cdot$L/s. The fiber is polished SMF-28 (Corning, \$200/m), Kapton-jacketed on the vacuum side. A short ($\sim$\,30\,cm) pigtail on the vacuum side terminates at an FC/APC bulkhead on the warm shield, from which another short polished-end fiber pigtail drops down to the cryo photodiode on the cold platform.
+
+\paragraph{Cryo photodiode.} Hamamatsu G12180 series InP photodiode (\$5\,k), cryo-qualified at 77\,K. Responsivity at 1310\,nm: $\sim$\,1\,A/W. The photodiode mounts on the cold platform with a 0.2\,mm layer of Apiezon N grease for thermal contact, and a small focusing lens (Thorlabs C220TME-C, \$200) couples the fiber output onto the active area.
+
+This is the photonic data path \textit{in miniature}. Stage A runs one fiber and one photodiode. Stage B scales it to 32 fibers $\times$ 96 wavelengths $\times$ 200\,Gbps (v4\_datapath.md \S 7.3). The architectural pattern is the same; only the count scales.
+
+% =====================================================================
+\section{Control electronics rack}
+
+The 19" rack lives off-bench (on casters, on its own footprint to the right of the bench), 1.5\,m tall, with cable management for the bench-side penetrations.
+
+\begin{center}
+\small
+\begin{tabular}{p{1.5cm} p{5cm} p{8cm}}
+\toprule
+\textbf{Slot} & \textbf{Component} & \textbf{Notes} \\
+\midrule
+Top & Pattern streamer workstation & Linux box, 64\,GB RAM, NVMe scratch; runs v5 compiler + GUI \\
+& FPGA evaluation board & Xilinx Versal Premium or Alveo U200; runs the L1--L4 control firmware. \\
+& 50\,kV HVPS & Spellman SR50PN (negative polarity, 50\,kV / 5\,mA) --- drives the gun cathode bias. \\
+& Cryocooler control + thermometry & Cryomech CPA-1110 controller; Lake Shore Model 336 temperature controller. \\
+& Vacuum control & Pfeiffer DCU + TPG-366 gauge controller --- turbo, valves, RGA, ion pump. \\
+& DAQ & AlazarTech ATS9462 for BSE; PI E-518 for stage; ZMI controller. \\
+Bottom & UPS & 3\,kVA online double-conversion. Mandatory --- an unplanned shutdown of the cryocooler mid-cool-down loses 24\,hours. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Two long bundles run from rack to bench: a signal bundle (fiber, coax, low-voltage DC) and a separate HV bundle (50\,kV shielded coax, $\geq$\,30\,cm from the signal bundle).
+
+% =====================================================================
+\section{Assembly sequence}
+
+The build proceeds in roughly weekly milestones. With two engineers (one on optics, one on cryo) the build compresses to 12--14 weeks; the timeline below assumes a sequential one-engineer build for clarity.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.95\textwidth]{build_fig4_gantt.pdf}
+\caption{Stage A assembly Gantt chart, 18 weeks from parts inventory to first electron-beam exposure. Milestones: M1 vacuum-OK (week 4), M2 cryo-cold (week 9), M3 HV-up (week 16), M4 first exposure (week 19). The 6-test validation campaign then runs over months 5--15 of the program.}
+\label{fig:gantt}
+\end{figure}
+
+\paragraph{Day 0 (parts arrive).} Inventory every line item against the BOM (\S\,\ref{sec:bom}). Quarantine any component with shipping damage. Critical --- there is a single PT-90 in this build with no spare, so a damaged cold head means a 6-month backorder from Cryomech. Photograph everything as-received.
+
+\paragraph{Week 1: Bench setup.} Receive and install the granite bench and the four pneumatic isolators. Level the bench (laser level, 4-corner method). Run a vibration sweep with the LDV --- confirm $<$\,5\,nm RMS floor before any chamber work. Set up the cleanroom-style enclosure (HEPA-filtered air curtain, ISO class 6 equivalent, $\sim$\,\$3\,k for a fan-filter unit) over the chamber footprint.
+
+\paragraph{Week 2: Vacuum assembly + leak test.} Per \S\,3. Empty chamber, all flanges installed, copper gaskets fresh, helium-leak-tested to $\leq$\,$1 \times 10^{-9}$\,Torr$\cdot$L/s on every joint.
+
+\paragraph{Weeks 3--4: Bake-out + pump-down.} 120\,$^\circ$C, 48\,h continuous, then cool over 24\,h, then ion-pump ignition. Verify $\leq$\,$5 \times 10^{-10}$\,Torr base. Run an RGA spectrum to confirm dominant peaks are H$_2$ and H$_2$O; any mass 28 (CO/N$_2$) signal more than $\sim$\,10\,\% of H$_2$ suggests a virtual leak.
+
+\paragraph{Week 5: Install source gun + cold finger.} Vent the chamber under dry N$_2$ (grade 5), install the CFE gun on the upper-left port via the picomotor kinematic mount, install the cold-finger assembly via the top 8" CF and bellows. The cold finger goes in \textit{empty} --- coil/DAC/photodiode are bolted to the cold platform on the bench, then the whole platform-loaded cold finger drops in as a unit.
+
+\paragraph{Weeks 6--8: HTS coil + cryo-CMOS DAC + wiring.} The most finicky phase of the build. Bring the cold-finger payload up to the bench ESD-safe assembly area. Bolt the YBCO sapphire wafer to the cold platform via the flexure clamp. Wire-bond the Au coil leads to the DAC output pads. Solder the photodiode pigtail to the DAC input. Mount the InP photodiode beside the DAC with Apiezon N. Verify electrical continuity end-to-end with a low-current ($\mu$A) source meter, \textit{before} the assembly goes back into vacuum.
+
+Wire the warm-side feedthroughs: phosphor-bronze hookup wire for the DAC supply rails, coax for the cold thermometry, and a small connector board on the chamber-external side of the electrical CF feedthrough. Heat-shrink and strain-relieve everything; the cold finger sees $\sim$\,0.3\,mm of contraction, so wires need to be $\sim$\,5\,mm slack at room temperature.
+
+Re-install the loaded cold finger. Re-bake (80\,$^\circ$C ceiling, 24\,h). Cool to 77\,K and verify the DAC powers up and the photodiode shows reasonable dark current ($<$\,1\,nA at 77\,K).
+
+\paragraph{Weeks 9--12: Photonic data path.} Install the Accu-Glass fiber feedthrough. Pull the SMF from the rack to the feedthrough warm side, splice the polished pigtail to the cold-side bulkhead. Bring up the SFP+ at the rack, send a known bit pattern, scope it on the photodiode at 77\,K. Verify the DAC ingest pipeline (FPGA at the rack drives the SFP+; DAC at the cold side reads the photodiode and emits a current). Calibrate one fixed output current and verify it on the YBCO coil with a Hall probe held at room temperature adjacent to the coil.
+
+\paragraph{Weeks 13--15: Wafer stage + BSE detector.} Vent under N$_2$, install the PI piezo stage on the chamber floor with a kinematic bolt-down (the stage needs to come out for service without re-aligning the column every time). Bolt down the Al chuck, route the He backside gas line through a 2.75" CF feedthrough on the lower-left port. Install the BSE detector on the upper-right port. Bond the ZMI cube corners to the chuck with Stycast 2850 FT. Set up the ZMI optical path through the lower-right viewport. Re-pump, re-bake (the BSE detector is the new low-bake-temperature item; follow El-Mul's spec, typically 100\,$^\circ$C max).
+
+\paragraph{Weeks 16--17: Cool-down, HV ramp, alignment.} Start the PT-90, cool to 77\,K over $\sim$\,6\,h, dwell overnight to thermalise. Ramp the HVPS from 0 to 50\,kV over $\sim$\,30\,min, watching for any HV arc events on the Spellman current meter. Once at 50\,kV, scan the gun's picomotor mount to find first beam on a fluorescent screen (a YAG:Ce single-crystal coupon, \$500, mounted on the chuck for this purpose) --- the beam is found as a bright spot under a viewport-mounted CCD camera.
+
+\paragraph{Week 18: First beam test.} \S\,\ref{sec:firstlight}.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.75\textwidth]{build_fig5_exploded.pdf}
+\caption{Cold-finger payload exploded view. Stack-up of items mounted to the 77\,K cold-finger platform, bottom-up: mechanical alignment jig, YBCO Meissner shield, YBCO planar Helmholtz coil pair, InP photodiode tile, cryo-CMOS DAC on Al$_2$O$_3$ interposer, MLI wrap on the warm side, OFHC copper thermal mass, CF flange + bellows interface to the chamber top.}
+\label{fig:exploded}
+\end{figure}
+
+% =====================================================================
+\section{First-light test sequence}
+\label{sec:firstlight}
+
+Once the build hits week 18 and all systems are nominally operational, the following sequence brings the tool from ``powered up'' to ``first electron-beam exposure on resist''. Each step is a checkpoint --- \textit{do not skip ahead}.
+
+\begin{enumerate}[leftmargin=1.6em]
+  \item \textbf{Vacuum check.} Confirm chamber pressure $\leq 5 \times 10^{-10}$\,Torr. RGA shows the expected H$_2$/H$_2$O-dominated spectrum, no anomalous mass peaks. Cryo surfaces are now active cryosorbers --- the system pressure will \textit{drop} by $\sim$\,10$\times$ when the PT-90 reaches 77\,K.
+
+  \item \textbf{HV ramp-up.} With the gun's internal getter pump confirmed active (gun-vacuum readout $<$\,$10^{-10}$\,Torr), the HVPS ramps from 0 $\to$ 50\,kV at $\sim$\,1\,kV/min. Watch the gun current monitor. Conditioning arcs are normal in the first $\sim$\,30 minutes of operation on a fresh column; they should subside. Stop at 50\,kV. Confirm gun emission current of $\sim$\,5\,nA at the tip aperture.
+
+  \item \textbf{First electron beam to fluorescent screen.} Open the picomotor shutter on the gun. Scan the gun X/Y picomotors slowly while watching the viewport CCD (looking at the YAG:Ce coupon on the chuck). When the beam lands on the YAG, you see a small bright (green, $\sim$\,550\,nm) spot. Centre the beam on the coupon using the picomotors. Without the YBCO coil powered, the spot is at the column axis defined by the gun pointing.
+
+  \item \textbf{BSE detection on a fiducial.} Replace the YAG coupon with a fiducial wafer (etched W cross marks, 5\,\textmu m arm length, 100\,nm width). Scan the beam over the fiducial by stepping the piezo stage --- the BSE detector shows a signal modulation as the beam crosses the W mark (W has high BSE yield against Si substrate, $\sim$\,4$\times$ contrast). Confirm BSE imaging works.
+
+  \item \textbf{Cryostat cool-down.} PT-90 on, $\sim$\,6\,h to 77\,K. Cernox readout on the cold platform reads 77\,K $\pm$ 1\,K stable. Note that pressure drops to $\sim$\,$5 \times 10^{-11}$\,Torr --- the cryosorption is active.
+
+  \item \textbf{DAC commissioning.} Walk the cryo-CMOS DAC through its full 16-bit range, one LSB at a time, monitoring the output current with the in-line shunt resistor on the warm side. Measure INL/DNL --- target INL $\leq$ 1 LSB, DNL $\leq$ 0.5 LSB. If INL exceeds spec, run the DAC's on-chip calibration routine (per Imec/IPMS engineering-sample app note).
+
+  \item \textbf{HTS coil deflection sweep.} With the beam landed on the YAG coupon and the DAC commissioned, ramp the DAC output current 0 $\to$ $I_{max}$. Watch the YAG spot translate. Measure the deflection angle as a function of DAC code: with a 50\,mm drift to the wafer, a 1\,mrad deflection = 50\,\textmu m at the chuck, which is easily resolved by the viewport CCD. \textit{Target: 1\,mrad deflection per $\sim$\,0.42\,A coil current (v4 \S X.1), linear within 1\,\% over the full deflection range, settling time $<$\,10\,\textmu s.} This is the headline measurement of Stage A. If the deflection is linear and fast and the AC loss budget holds, the cryogenic HTS deflection architecture is empirically validated.
+
+  \item \textbf{First exposure on test resist.} Replace the fiducial wafer with an HSQ-coated test wafer (HSQ XR-1541 at 4\,\% concentration spun to $\sim$\,80\,nm on a 4" Si wafer, baked at 80\,$^\circ$C, 2\,min). Set the beam current to $\sim$\,1\,nA (throttle via the gun extractor voltage). Expose a coarse cross-pattern by driving the cryo-CMOS DAC with a pre-loaded GDS-II pattern (a 100\,\textmu m cross with 1\,\textmu m arm width). Dose target: 2000\,\textmu C/cm$^2$. After exposure, vent under N$_2$, develop in 25\,\% TMAH for 60\,s, rinse, and inspect under a standard SEM. \textit{A visible cross pattern in HSQ is the Stage A ``first exposure'' milestone.} The pattern fidelity is irrelevant at this stage; the existence of the pattern proves the data path $\to$ DAC $\to$ coil $\to$ beam $\to$ resist loop is closed end-to-end.
+
+  \item \textbf{Test campaign begins.} From here on, the build is ``complete'' and the team transitions to the 6-test validation campaign (v4 \S ``Tests it validates''). Each test runs in $\sim$\,1\,month; some run in parallel. Total: 30 weeks to a full Stage A report.
+\end{enumerate}
+
+% =====================================================================
+\section{Cost breakdown}
+\label{sec:bom}
+
+Per the BOM in \texttt{v4\_stage\_A\_prototype.md}, with vendor part numbers added where reasonable. Prices in 2026 USD; many items have moved $\pm$20\,\% since the v4 publication --- these are point estimates, not quotes.
+
+\begin{center}
+\small
+\begin{longtable}{p{4.5cm} p{3cm} p{4cm} r r r}
+\toprule
+\textbf{Item} & \textbf{Vendor} & \textbf{Part} & \textbf{Unit} & \textbf{Qty} & \textbf{Sub} \\
+\midrule
+CFE gun (50 kV)                & Thermo Fisher       & Custom CFE module       & \$50 k & 1  & \$50 k  \\
+Dual-tip Wehnelt mod (opt)     & Thermo Fisher       & Engineering-spec        & \$5 k  & 1  & \$5 k   \\
+YBCO 2G tape, 4"               & SuperPower          & SCS4050                 & \$10 k & 1  & \$10 k  \\
+YBCO patterning service        & U. Alberta / SuperPower & quote               & \$30 k & 1  & \$30 k  \\
+Cryo-CMOS 16-bit DAC ES        & Imec / Fraunhofer IPMS & engineering-sample   & \$10 k & 1  & \$10 k  \\
+Cryo InP photodiode            & Hamamatsu           & G12180-series           & \$5 k  & 1  & \$5 k   \\
+SFP+ optical TX 10G LR         & Cisco               & SFP-10G-LR              & \$0.2 k & 1 & \$0.2 k \\
+SMF + UHV feedthrough          & Corning + Accu-Glass & SMF-28 + AG fiber CF   & \$3 k  & 1  & \$3 k   \\
+BSE detector                   & El-Mul              & SE/BSE annular          & \$30 k & 1  & \$30 k  \\
+8" CF UHV chamber              & Kurt J. Lesker      & spec build, 6-port      & \$60 k & 1  & \$60 k  \\
+Cryomech PT-90 + CP-289        & Cryomech            & PT90 + CPA-1110         & \$30 k & 1  & \$30 k  \\
+Cryostat / cold finger assy    & Janis (custom)      & OFHC + bellows kit      & \$25 k & 1  & \$25 k  \\
+6-DOF piezo stage              & Physik Instrumente  & N-731                   & \$50 k & 1  & \$50 k  \\
+ZMI interferometer head        & Zygo                & ZMI-2000 2-axis         & \$25 k & 1  & \$25 k  \\
+50 kV HVPS                     & Spellman            & SR50PN                  & \$10 k & 1  & \$10 k  \\
+FPGA + workstation             & AMD/Xilinx + Dell   & Versal Premium VPK180   & \$20 k & 1  & \$20 k  \\
+Etched fiducial wafer          & U. clean room       & W-cross/grating/vernier & \$1 k  & 5  & \$5 k   \\
+HSQ resist                     & DuPont / Allresist  & XR-1541-006             & \$0.5 k & 2 & \$1 k   \\
+Vacuum infrastructure          & Pfeiffer / Lesker   & turbo + ion + RGA       & \$30 k & 1  & \$30 k  \\
+Granite bench + isolators      & Newport             & RS-3000 + S-2000        & \$15 k & 1  & \$15 k  \\
+HEPA enclosure                 & Terra Universal     & custom                  & \$3 k  & 1  & \$3 k   \\
+Misc. (cables, tooling, He)    & various             & ---                     & \$10 k & 1  & \$10 k  \\
+Integration labour             & ---                 & engineer $\times$ month & \$15 k & 18 & \$270 k \\
+\midrule
+\textbf{Stage A total}         &                     &                         &        &    & \textbf{$\sim$\$667 k} \\
+\bottomrule
+\end{longtable}
+\end{center}
+
+The labour line is the dominant cost. Hardware-only is $\sim$\,\$397\,k; with one engineer at full freight for 18 months the total lands in the \$600--700\,k band quoted in v4. A second engineer for the parallel-track build phase (weeks 5--17) compresses the schedule to $\sim$\,12 weeks total at a $\sim$\,\$60\,k labour delta, raising the total to $\sim$\,\$730\,k for a faster build.
+
+% =====================================================================
+\section{Common failure modes + recovery}
+
+What goes wrong, in roughly decreasing order of likelihood during the first year of operation:
+
+\paragraph{Vacuum leak.} \textbf{Symptom}: pressure rises above $1 \times 10^{-8}$\,Torr with both pumps running and no obvious cause. Root cause is usually a CF gasket that loosened during a thermal cycle. \textbf{Recovery}: He leak detection on every joint, in reverse order of last assembly. Common offenders are (a) the load-lock gate valve (re-torque), (b) the cold-finger 8" CF (re-torque after first cool/warm cycle is normal), and (c) the electrical feedthroughs.
+
+\paragraph{HV arc on the gun.} \textbf{Symptom}: sudden current spike on the Spellman meter, gun-vacuum readout jumps, possibly a visible flash through the viewport. \textbf{Recovery}: back off HV to 0 immediately, let the gun rest at 0\,V for 15\,min, ramp back up at 0.5\,kV/min, expect more conditioning arcs in the first 30\,min. If arcs persist above 30\,kV for more than 1\,h of conditioning, vent and inspect the gun for whisker debris on the anode. CFE tips can fail catastrophically after $\sim$\,1000 hours; budget for one replacement tip ($\sim$\,\$3\,k) per year.
+
+\paragraph{HTS quench.} \textbf{Symptom}: the YBCO coil suddenly stops carrying current, the DAC output appears in compliance, and the cold platform shows a temperature spike of $\sim$\,1--5\,K. \textbf{Cause}: the coil exceeded its critical current locally (a solder-joint defect, a film thickness variation, or a temperature excursion from AC loss). \textbf{Recovery}: cut the DAC drive immediately (the cryo-CMOS DAC has an on-chip over-current trip --- verify it tripped), let the cold platform re-equilibrate to 77\,K ($\sim$\,5\,min), restart at lower drive. If quench repeats, inspect the coil under SEM after a vent. \textbf{Protect circuit}: a 1\,$\Omega$ current-limit resistor in series with the DAC output bounds the worst-case fault current at $\sim$\,1\,A.
+
+\paragraph{Cryo-CMOS DAC failure.} \textbf{Symptom}: DAC outputs static, no response to control words. Most common cause: an ESD event during a thermal cycle from ungrounded handling. \textbf{Recovery}: vent, warm to 295\,K, swap the DAC die on the interposer (the interposer is socketed for this --- the DAC is replaced as a unit, $\sim$\,\$10\,k per swap), re-cool, re-commission. Stage A keeps one spare DAC in the parts cabinet.
+
+\paragraph{Stage drift.} \textbf{Symptom}: BSE registration loop fails to converge; ZMI shows the stage walking 10--100\,nm/hour without command. \textbf{Cause}: thermal drift in the granite bench or in the cryostat-to-chamber mechanical interface. \textbf{Recovery}: re-zero the ZMI, run a 1-hour static drift measurement to characterise the drift rate, and add a per-shift recalibration loop in the control firmware. If drift exceeds 100\,nm/hour, suspect a vibration intrusion or a thermal intrusion (a 1\,K shift in the bench room moves the granite by $\sim$\,100\,nm/m).
+
+\paragraph{Cryocooler compressor warning.} \textbf{Symptom}: Cryomech CPA-1110 controller flags a high-pressure alarm or water-flow alarm. \textbf{Recovery}: shut down the cold head load (cut DAC drive, no AC loss), inspect the water-cooling loop, top up He if pressure has dropped below 200\,psi static.
+
+\paragraph{Fiber-link bit errors.} \textbf{Symptom}: DAC output shows occasional wild excursions inconsistent with the pattern stream. \textbf{Cause}: fiber polishing degraded at the cold-side bulkhead after thermal cycles, or the cryo photodiode has accumulated radiation damage from the column. \textbf{Recovery}: vent, inspect fiber end-face under a fiberscope, re-polish if needed; if the photodiode dark current has risen $>$\,5$\times$ from baseline, swap the photodiode (spare, $\sim$\,\$5\,k, kept in parts cabinet).
+
+% =====================================================================
+\section{Path forward}
+
+The first beam exposure (Step 8 above) is the ``Stage A built'' milestone. The six-test validation campaign (HTS linearity, Meissner attenuation, cryo-CMOS DAC INL/DNL, BSE registration loop closure, cryosorption capture fraction, chuck thermal transient) then runs over months 5--15 of the program, one test per $\sim$\,month with parallelism.
+
+At the end of month 18, the Stage A report goes to the funder. If all six tests pass within design margin, the v4/v5 architecture is empirically de-risked and the program advances to \textbf{Stage B} (16--64 beams, \$3--5\,M, 24 months) --- a parallel-column build that scales the same cryogenic / photonic / cryo-CMOS subsystems by $\sim$\,32$\times$, validates the photonic data path at $\sim$\,1.5\,Tbps aggregate, and produces the first scalable EBL exposures at multi-beam densities.
+
+The transition from Stage A $\to$ Stage B is \textit{not} a redesign. Every Stage A subsystem scales by replication: the same YBCO patterning recipe makes 32 coils instead of 1, the same cryo-CMOS DAC tile drives 32 channels instead of 1, the same Accu-Glass feedthrough hosts 32 fibers instead of 1. The Stage A build is \textit{the proof} that each subsystem works at 1$\times$ scale; the Stage B build is \textit{the proof} that it scales linearly.
+
+This manual is the bench-side companion to that program. The architecture is ready for build. The bottleneck is funding and skilled hands, not specification or science.
+
+\vspace{1em}
+\hrule
+\vspace{0.5em}
+
+\noindent\textit{Document: \texttt{v5\_prototype\_build\_manual.md} \,/\, \texttt{v5\_prototype\_build\_manual.pdf} \,$\cdot$\, Compiled via tectonic \,$\cdot$\, Figures generated by \texttt{build\_manual\_figures.py} (matplotlib + numpy) \,$\cdot$\, Released CC BY 4.0 alongside the Morin (2026) v5 paper and v4 supplementary materials.}
+
+\end{document}

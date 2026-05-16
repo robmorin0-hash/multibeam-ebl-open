@@ -1,0 +1,33 @@
+/home/thedoctor/mbm_spacecharge/phase3_cryo_thermal.py:181: SyntaxWarning: invalid escape sequence '\$'
+  ax2.text(bar.get_x() + bar.get_width()/2, lift + 2, f'\${cost}k', ha='center', fontsize=8)
+============================================================================
+ Phase 3a — v4 cryocolumn thermal network
+============================================================================
+
+Heat sources on 77 K cold mass:
+
+  AC losses (YBCO coils, 100 kHz, 5% duty):          0.12 W
+  Bore radiation (with 150 K shield):               0.0000 W
+    (without shield: 0.00 W — 224× higher)
+  Support conduction (6× Vespel SP-1 bipod):       0.0612 W
+  Blanker switching (10⁶ × 80V × 1kHz × 50%):        3.20 W
+  Cryo-CMOS DAC array (10⁶ × 100 μW):              100.00 W
+  Photonic receivers (32 trunks × 1.5 W):           48.00 W
+
+  =====================================================
+  TOTAL heat load:                                  151.38 W
+  With 50% engineering margin:                      227.07 W
+
+Cryocooler options (lift at 77 K):
+
+  Cryomech PT-90 (single-stage equivalent)       30 W @ 77K   $   30k   margin -87%   FAIL
+  Cryomech PT-180                                50 W @ 77K   $   45k   margin -78%   FAIL
+  Cryomech PT-410                               115 W @ 77K   $   75k   margin -49%   FAIL
+  Sumitomo RDK-415D (1st stage @ 77K-equiv)      40 W @ 77K   $   35k   margin -82%   FAIL
+  Edwards F-50                                   50 W @ 77K   $   40k   margin -78%   FAIL
+
+v4 selection: Cryomech PT-180 (50 W @ 77 K) ×2 N+1 redundant
+  Total install: 2 × PT-180 = $90k
+  Single-unit margin: -78%
+
+→ figure_phase3_thermal.pdf, .png
