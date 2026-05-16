@@ -1,0 +1,41 @@
+cff-version: 1.2.0
+message: "If you use this work, please cite it as below."
+title: "Multi-Beam Direct-Write Electron Lithography via Multi-Rate Electromagnetic Steering — v5 Open Architecture Release"
+abstract: >
+  An open, mask-free, multi-vendor architecture for mature-node semiconductor
+  manufacturing (50-180 nm), targeting roughly 10× lower capital cost than
+  EUV (~$37M per tool vs $200-400M), with no single-vendor architectural
+  dependency. Architectural floor reaches the 7 nm node at vanishing
+  per-beam current. Includes the v5 preprint (24pp), 11 verification
+  simulations, 12 subsystem engineering specifications, 3 software stack
+  specifications with runnable code skeletons, an X-ray architectural fork
+  (companion preprint), a plain-language version, a strategic market unlock
+  document, and a Stage A prototype build manual. Released openly with no
+  patent claims; all combinations and methods enter the public domain as
+  prior art.
+type: software
+authors:
+  - given-names: "Robert Gerald"
+    family-names: "Morin"
+    email: "robmorin0@gmail.com"
+    affiliation: "NÎKI Nation Builders, Edmonton, Alberta, Canada"
+    orcid: "https://orcid.org/0009-0008-8373-1496"
+keywords:
+  - "electron beam lithography"
+  - "multi-beam EBL"
+  - "direct-write lithography"
+  - "cryogenic lithography"
+  - "superconducting deflection"
+  - "silicon photonics"
+  - "open hardware"
+  - "open architecture"
+  - "mature-node semiconductor manufacturing"
+  - "sovereign semiconductor supply chain"
+  - "EUV alternative"
+  - "mask-free lithography"
+license: "CC-BY-4.0"
+license-url: "https://creativecommons.org/licenses/by/4.0/"
+version: "5.0"
+date-released: "2026-05-16"
+repository-code: "https://github.com/robmorin0-hash/multibeam-ebl-open"
+url: "https://github.com/robmorin0-hash/multibeam-ebl-open"
