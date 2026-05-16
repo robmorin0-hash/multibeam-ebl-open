@@ -1,12 +1,37 @@
 # Multi-Beam Direct-Write Electron Lithography — Open Architecture v5
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20247262.svg)](https://doi.org/10.5281/zenodo.20247262)
+[![License: CC BY 4.0](https://img.shields.io/badge/License%20(papers)-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
+[![License: MIT](https://img.shields.io/badge/License%20(code)-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 **An open, mask-free, multi-vendor architecture for mature-node semiconductor manufacturing — published, simulated, and software-defined.**
 
 Release: **v5 (May 16, 2026)** — final integrated open-source release with full software stack (GDS-II pattern compiler, real-time control firmware, tool operating system) layered on top of the v4.1 hardware engineering.
 
 Author: Robert Gerald Morin (NÎKI Nation Builders, Edmonton AB, Canada)
+ORCID: [0009-0008-8373-1496](https://orcid.org/0009-0008-8373-1496)
 Correspondence: robmorin0@gmail.com
 License: papers under CC BY 4.0 · code under MIT (see `LICENSE.papers`, `LICENSE.code`)
+
+## How to cite
+
+> Morin, R. G. (2026). *Multi-Beam Direct-Write Electron Lithography via Multi-Rate Electromagnetic Steering — v5 Open Architecture Release.* Zenodo. https://doi.org/10.5281/zenodo.20247262
+
+BibTeX:
+```bibtex
+@software{morin_2026_multibeam_ebl,
+  author       = {Morin, Robert Gerald},
+  title        = {{Multi-Beam Direct-Write Electron Lithography
+                   via Multi-Rate Electromagnetic Steering —
+                   v5 Open Architecture Release}},
+  month        = may,
+  year         = 2026,
+  publisher    = {Zenodo},
+  version      = {v5.0},
+  doi          = {10.5281/zenodo.20247262},
+  url          = {https://doi.org/10.5281/zenodo.20247262}
+}
+```
 
 ---
 

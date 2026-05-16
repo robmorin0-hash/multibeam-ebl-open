@@ -39,3 +39,8 @@ version: "5.0"
 date-released: "2026-05-16"
 repository-code: "https://github.com/robmorin0-hash/multibeam-ebl-open"
 url: "https://github.com/robmorin0-hash/multibeam-ebl-open"
+doi: "10.5281/zenodo.20247262"
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.20247262"
+    description: "Concept DOI (always points to latest version)"
